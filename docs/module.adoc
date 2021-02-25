@@ -11,5 +11,4 @@ which will be management by UEM.
 ----
 # REQUIRE: pkg
 # PROVIDE: emacs
-
 ----
