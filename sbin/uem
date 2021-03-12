@@ -1,2 +1,11 @@
 #! /bin/sh
 # -*- mode:shell-script
+_appdir=`dirname $0`
+TOP=`cd $_appdir/.. && pwd`
+export TOP
+
+if [ -f $TOP/libs/sys.sh ]; then
+    . $TOP/libs/sys.sh
+fi
+
+
