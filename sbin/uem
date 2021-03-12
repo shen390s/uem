@@ -8,4 +8,45 @@ if [ -f $TOP/libs/sys.sh ]; then
     . $TOP/libs/sys.sh
 fi
 
+# install UEM for current SHELL
+uem_install() {
+    echo install
+}
+
+# uninstall UEM for current SHELL
+uem_uninstall() {
+    echo  uninstall
+}
+
+# update after configuration changed
+uem_update() {
+    echo update
+}
+
+# show help information
+uem_help() {
+    echo help
+}
+
+action="$1"
+
+shift
+case "$action" in
+    install)
+	uem_install "$@"
+	;;
+    uninstall)
+	uem_uninstall "$@"
+	;;
+    update)
+	uem_update "$@"
+	;;
+    help)
+	uem_help "$@"
+	;;
+    *)
+	echo "Unknown command: $action"
+	uem_help
+	;;
+esac
 
