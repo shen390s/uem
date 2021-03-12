@@ -27,7 +27,7 @@ append_env() {
     if [ -z "$_v2" ]; then
 	_v="$_v1"
     else
-	_v="$_v2 $_v1"
+	_v="$_v2:$_v1"
     fi
 
     add_to_env "$_var" "$_v"
@@ -43,7 +43,7 @@ prefix_env() {
     if [ -z "$_v2" ]; then
 	_v="$_v1"
     else
-	_v="$_v1 $_v2"
+	_v="$_v1:$_v2"
     fi
 
     add_to_env "$_var" "$_v"
@@ -71,6 +71,7 @@ run_hook() {
 
     _hook="$1"
     _fns=`env_val "$_hook"`
+    _fns=`echo $_fns |sed -e 's/:/ /g'`
 
     shift
     for _fn in $_fns; do
