@@ -8,31 +8,31 @@ if [ -f $TOP/libs/sys.sh ]; then
     . $TOP/libs/sys.sh
 fi
 
-if [ -f $TOP/libs/config.sh ]; then
-    . $TOP/libs/config.sh
-fi
+# set -x
+add_to_env AUTOLIB_PATH "$TOP/libs"
 
 on_feature() {
-    echo
-    echo "action: $1"
-    echo "feature: $2"
+    INFO "action: %s" "$1"
+    INFO "feature: %s" "$2"
     shift 2
     while [ $# -gt 0 ]; do
-	echo "\toption: $1"
+	INFO "option: %s" "$1"
 	shift
     done
 }
 
 dummy_action() {
-    echo
-    echo "dummy: $@"
+    local _msg
+
+    string_concat_to _msg "$@"
+    INFO "dummy action: %s" "$_msg" 
 }
 
 
-features="+pkg(+nix +pkgsrc -brew -macport) +emacs(+native -x11 +macos) -anaconda +rust +rtc"
+features="+pkg(+nix +pkgsrc -brew -macport) +emacs -anaconda +rust +rtc"
 
+# set -x
 add_hook process_feature_hook dummy_action
 add_hook process_feature_hook on_feature
 
-echo "parsing feature configuration:\n\t $features"
 parse_features_config "$features"

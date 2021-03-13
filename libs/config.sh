@@ -1,4 +1,4 @@
-
+###;;;AUTOLIB:config:D409A78F-6465-49DE-A703-D40CC2320A70
 def_hook process_feature_hook
 
 feature_name() {
@@ -27,6 +27,7 @@ process_feature_config() {
     esac
 }
 
+###;;;autoload
 parse_features_config() {
     local _features _data _remain 
 
