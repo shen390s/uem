@@ -132,7 +132,7 @@ log_lvl_name() {
 }
 
 log_msg_with_color() {
-    local _color _lvl_tag _fmt _msg _time
+    local _color _lvl_tag _fmt _msg _time _pid
 
     _color="$1"
     _lvl_tag="$2"
@@ -145,8 +145,9 @@ log_msg_with_color() {
 
     # set +x
 
+    _pid="$$"
     set_color $_color
-    printf "%s  %s\n" "$_time" "$_msg" 
+    printf "%s %6d %s\n" "$_time" "$_pid" "$_msg" 
     reset_color
 }
 

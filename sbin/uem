@@ -28,6 +28,57 @@ uem_help() {
     echo help
 }
 
+uem_do_test() {
+    local _test _case
+
+    _case="$1"
+    _test="$TOP/testsuite/$_case"
+	
+    if [ -x $_test ]; then
+	:
+    else
+	_test="$_test.sh"
+	if [ ! -x "$_test" ]; then 
+	    ERROR "test case: %s not found" "$1"
+	    return 1
+	fi
+    fi
+
+    INFO "Run test: %s" "$_case"
+    eval "$_test"    
+}
+
+uem_test_all() {
+    local _test _case
+
+    for _test in $TOP/testsuite/*.sh; do
+	_case=`basename "$_test"`
+	_case=`echo $_case | sed -e 's/\.sh//g'`
+	INFO "Run test: %s" "$_case"
+	eval "$_test"
+    done
+}
+
+uem_test() {
+    local _item
+
+    if [ $# -lt 1 ]; then
+	INFO "No case specified, run all test"
+	_item="all"
+    else
+	_item="$1"
+    fi
+
+    case "$_item" in
+	all)
+	    uem_test_all
+	    ;;
+	*)
+	    uem_do_test "$_item"
+	    ;;
+    esac
+}
+
 action="$1"
 
 shift
@@ -43,6 +94,9 @@ case "$action" in
 	;;
     help)
 	uem_help "$@"
+	;;
+    test)
+	uem_test "$@"
 	;;
     *)
 	echo "Unknown command: $action"
