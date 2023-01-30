@@ -1,0 +1,3 @@
+(:name "default"
+ :directory "~/uem/default"
+ :setup-fn uem-default)

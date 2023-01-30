@@ -1,0 +1,55 @@
+#!/bin/sh
+#|-*- mode:lisp -*-|#
+#|
+exec ros -Q -- $0 "$@"
+|#
+(progn ;;init forms
+  (ros:ensure-asdf)
+  #+quicklisp(ql:quickload '(:uiop :clingon :uem) :silent nil))
+  
+
+(asdf:load-system :uem)
+
+(defpackage :ros.script.uem.3883002840
+  (:use :cl))
+(in-package :ros.script.uem.3883002840)
+
+(defun uem/handler (cmd)
+  "The handler of uem toplevel command. Will print the usage then exit"
+  (clingon:print-usage-and-exit cmd t))
+
+(defun uem/options ()
+  (list (clingon:make-option :counter
+                             :description "verbose"
+                             :short-name #\v
+                             :long-name "verbose"
+                             :key :verbose)))
+
+(defun uem/version ()
+  (clingon:make-command :name "version"
+                        :description "show the version of uem"
+                        :usage "version"
+                        :options nil
+                        :handler #'(lambda (cmd)
+                                     (declare (ignorable cmd))
+                                     (uem:show-version))))
+
+(defun uem/command ()
+  "uem toplevel command"
+  (clingon:make-command :name "uem"
+                        :description "uem is a tool to build  universal environment configuration"
+                        :version uem:uem-version
+                        :handler #'uem/handler
+                        :options (uem/options)
+                        :sub-commands (append (mapcar #'(lambda (fn)
+                                                          (funcall fn))
+                                                      (uem:uem/addons))
+                                              (list (uem/version)))))
+
+                                            
+(defun main (&rest argv)
+  (declare (ignorable argv))
+  "The main entrypoint of uem"
+  (let ((app (uem/command)))
+    (clingon:run app)))
+;;; vim: set ft=lisp lisp:

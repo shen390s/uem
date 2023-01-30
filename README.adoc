@@ -1,4 +1,4 @@
-= UEM -- A tool for User Environment Management
+= UEM -- A tool for Universal Environment Management
 
 == Installation
 
