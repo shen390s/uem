@@ -28,20 +28,36 @@ exec ros -Q -- $0 "$@"
 (defun uem/version ()
   (clingon:make-command :name "version"
                         :description "show the version of uem"
-                        :usage "version"
+                        :usage ""
                         :options nil
                         :handler #'(lambda (cmd)
                                      (declare (ignorable cmd))
                                      (uem:show-version))))
 
+(defun uem/gen/options ()
+  (list
+   (clingon:make-option
+    :string
+    :description "module path"
+    :short-name #\m
+    :long-name "modulepath"
+    :key :module-path)
+   (clingon:make-option
+    :counter
+    :description "verbose"
+    :short-name #\v
+    :long-name "verbose"
+    :key :verbose)))
+
 (defun uem/gen ()
   (clingon:make-command :name "gen"
                         :description "generate configuration"
-                        :usage "gen"
-                        :options nil
+                        :usage ""
+                        :options (uem/gen/options)
                         :handler #'(lambda (cmd)
-                                     (declare (ignorable cmd))
-                                     (uem:gen))))
+                                     (let ((module-path (clingon:getopt cmd :module-path))
+                                           (verbose (clingon:getopt cmd :verbose)))
+                                       (uem:gen module-path verbose)))))
 (defun uem/command ()
   "uem toplevel command"
   (clingon:make-command :name "uem"

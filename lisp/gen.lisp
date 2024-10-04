@@ -1,4 +1,6 @@
 (in-package :uem)
 
-(defun gen ()
-  (format t "Generating configuration..."))
+(defun gen (module-path verbose)
+  (format t "Generating configuration...~%")
+  (format t "load module from ~A~%" module-path)
+  (format t "Verbose: ~A~%" verbose))
