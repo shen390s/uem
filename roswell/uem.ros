@@ -34,6 +34,14 @@ exec ros -Q -- $0 "$@"
                                      (declare (ignorable cmd))
                                      (uem:show-version))))
 
+(defun uem/gen ()
+  (clingon:make-command :name "gen"
+                        :description "generate configuration"
+                        :usage "gen"
+                        :options nil
+                        :handler #'(lambda (cmd)
+                                     (declare (ignorable cmd))
+                                     (uem:gen))))
 (defun uem/command ()
   "uem toplevel command"
   (clingon:make-command :name "uem"
@@ -41,10 +49,8 @@ exec ros -Q -- $0 "$@"
                         :version uem:uem-version
                         :handler #'uem/handler
                         :options (uem/options)
-                        :sub-commands (append (mapcar #'(lambda (fn)
-                                                          (funcall fn))
-                                                      (uem:uem/addons))
-                                              (list (uem/version)))))
+                        :sub-commands (list (uem/version)
+                                            (uem/gen))))
 
                                             
 (defun main (&rest argv)

@@ -4,4 +4,4 @@
    :uem-version
    :show-version
    :run-program-ex
-   :uem/addons))
+   :gen))

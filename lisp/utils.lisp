@@ -1,14 +1,5 @@
 (in-package :uem)
 
-(defvar addons nil
-  "list of addons which uem can support")
-
-(defun uem/register-addon (fn)
-  (push fn addons))
-
-(defun uem/addons ()
-  addons)
-
 (defun run-program-ex (args &key output)
   (if (ignore-errors #1=(read-from-string "uiop/run-program:run-program"))
       (funcall #1# (format nil "~{~A~^ ~}" args)
