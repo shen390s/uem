@@ -17,3 +17,17 @@
                                  while line
                                  collect line))
                    (ext:run-shell-command (format nil "~{~A~^ ~}" args))))))
+
+(defun collect-lists (acc lists)
+  (if lists
+      (collect-lists (append acc (car lists))
+                     (cdr lists))
+    acc))
+  
+(defun quote-keyword-args (args)
+  (let ((keywords (remove-if-not #'keywordp args)))
+    (let ((xargs (collect-lists nil
+                                (loop for k in keywords
+                                      collect `(,k ',(getf args k))))))
+      (format t "xargs: ~A ~%" xargs)
+      xargs)))
