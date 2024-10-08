@@ -14,6 +14,8 @@
                 ((:file "package")
                  (:file "version")
                  (:file "const")
+                 (:file "core-feat")
+                 (:file "core-sys")
                  (:file "core")
                  (:file "gen")
                  (:file "utils"))))
