@@ -7,10 +7,11 @@
   "All defined system goes here")
 
 (defmacro feat! (name &rest args)
-  `(let ((feature (make-instance 'UEMFeature
-                                 :name ',name
-                                 ,@args)))
-     (setf (gethash ',name *uem-features*) feature)))
+  (let ((xargs (quote-keyword-args args)))
+    `(let ((feature (make-instance 'UEMFeature
+                                   :name ',name
+                                   ,@xargs)))
+       (setf (gethash ',name *uem-features*) feature))))
 
 (defmacro sys! (name &rest args)
   (let ((xargs (quote-keyword-args args)))
