@@ -5,4 +5,9 @@
   (format t "load module from ~A~%" module-path)
   (format t "Verbose: ~A~%" verbose)
   (in-package :uem)
-  (load module-path))
+  (load module-path)
+  (maphash #'(lambda (k v)
+               (progn
+                 (load-modules v module-path)
+                 (gencode v k)))
+           *uem-sys*))

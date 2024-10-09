@@ -15,6 +15,12 @@
    (init :initarg :init
          :initform nil)))
 
+(defgeneric gencode (s name)
+            (:documentation "Generate the code of UEM system"))
+
+(defgeneric load-modules (s path)
+            (:documentation "Load modules from path"))
+
 (defclass UEMUnknown (UEMSystem)
   ())
 
@@ -29,6 +35,12 @@
           :initform nil)
    (complete :initarg :complete
              :initform nil)))
+
+(defmethod gencode ((s UEMEmacs) name)
+           (format t "Generate code for ~a(UEMEmacs) ~A" name s))
+
+(defmethod load-modules ((s UEMEmacs) path)
+           (format t "Loading modules from ~a...~%" path))
 
 (defclass UEMShell (UEMSystem)
   ())
