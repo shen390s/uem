@@ -1,6 +1,5 @@
 (in-package :uem)
 
-
 ;; uem-system
 ;; emacs
 ;;   sections:
@@ -9,17 +8,28 @@
 ;;   sections:
 ;;     init, ...
 
+(defgeneric gencode (s name)
+            (:documentation "Generate the code of UEM system"))
+
+(defgeneric load-modules (s path)
+            (:documentation "Load modules from path"))
+
+(defgeneric do-load (s path)
+            (:documentation "Load module file"))
+
 (defclass UEMSystem ()
   ((sysname :initarg :sysname
             :initform "Unknown")
    (init :initarg :init
          :initform nil)))
 
-(defgeneric gencode (s name)
-            (:documentation "Generate the code of UEM system"))
+(defmethod load-modules ((s UEMSystem) dir)
+  (cl-fad::walk-directory dir
+                          #'(lambda (filename)
+                              (do-load s filename))))
 
-(defgeneric load-modules (s path)
-            (:documentation "Load modules from path"))
+(defmethod do-load ((s UEMSystem) filename)
+           (format t "Loading file ~a...~%" filename))
 
 (defclass UEMUnknown (UEMSystem)
   ())
@@ -38,9 +48,6 @@
 
 (defmethod gencode ((s UEMEmacs) name)
            (format t "Generate code for ~a(UEMEmacs) ~A" name s))
-
-(defmethod load-modules ((s UEMEmacs) path)
-           (format t "Loading modules from ~a...~%" path))
 
 (defclass UEMShell (UEMSystem)
   ())

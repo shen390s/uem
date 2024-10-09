@@ -30,9 +30,4 @@
                                 (loop for k in keywords
                                       collect `(,k ',(getf args k))))))
       (format t "xargs: ~A ~%" xargs)
-      xargs))))
-
-
-(defun walk-directory (dirname fn))
-(defun load-files (name directory)
-  )
+      xargs)))

@@ -5,7 +5,7 @@ exec ros -Q -- $0 "$@"
 |#
 (progn ;;init forms
   (ros:ensure-asdf)
-  #+quicklisp(ql:quickload '(:uiop :clingon :uem) :silent nil))
+  #+quicklisp(ql:quickload '(:uiop :clingon :cl-fad :uem) :silent nil))
   
 
 (asdf:load-system :uem)
