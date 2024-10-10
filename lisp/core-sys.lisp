@@ -76,12 +76,23 @@
 (defmethod gencode-section ((s UEMEmacs) section)
   (format t "Generate code for ~a system ~a~%" section s)
   (with-output-to-string (out)
-    (maphash #'(lambda (k v)
-                 (format out ";;; ~a for feature ~a~%" section k)
-                 (let ((c (gencode-action v section :activate)))
-                   (when c
-                     (format out "~a~%" c))))
-             *uem-features*)))
+    (with-slots (init app core ui modes complete) s
+      (cond
+        ((eql section :init)
+         (progn
+           (format out "~a~%" init)
+           (maphash #'(lambda (k v)
+                        (format out ";;; ~a for feature ~a~%" section k)
+                        (let ((c (gencode-action v :ignore `(,section))))
+                          (when c
+                            (format out "~a~%" c))))
+                    *uem-features*)))
+        (t (maphash #'(lambda (k v)
+                        (format out ";;; ~a for feature ~a~%" section k)
+                        (let ((c (gencode-action v :ignore `(,section))))
+                          (when c
+                            (format out "~a~%" c))))
+                    *uem-features*))))))
 
 (defclass UEMShell (UEMSystem)
   ())

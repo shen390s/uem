@@ -1,2 +1,4 @@
-(feat! emacs-server)
+(feat! emacs-server
+       :sections (:app)
+       :activate (server-start))
 
