@@ -1,6 +1,6 @@
 (in-package :uem)
 
-(defun gen (module-path verbose)
+(defun gen (module-path verbose output)
   (format t "Generating configuration...~%")
   (format t "load system from ~A~%" module-path)
   (format t "Verbose: ~A~%" verbose)
@@ -14,5 +14,7 @@
       (maphash #'(lambda (k v)
                    (progn
                      (load-modules v pkg-path)
-                     (gencode v k)))
+                     (with-open-file (out (ensure-directories-exist output) :direction :output
+                                          :if-exists :overwrite)
+                       (format out (gencode v k)))))
                *uem-sys*))))

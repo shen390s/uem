@@ -38,11 +38,13 @@
   nil)
 
 (defmethod gencode-section ((s UEMSystem) section)
-  (format t "Generate code for section ~a~%" section))
+  (format t  "Generate code for section ~a~%" section)
+  "")
 
 (defmethod gencode ((s UEMSystem) name)
-  (loop for section in (sections s)
-        do (gencode-section s section)))
+  (with-output-to-string (out)
+    (loop for section in (sections s)
+          do (format out (gencode-section s section)))))
 
 (defmethod do-load ((s UEMSystem) filename)
   (let ((ftype (pathname-type filename)))
@@ -73,12 +75,12 @@
 
 (defmethod gencode-section ((s UEMEmacs) section)
   (format t "Generate code for ~a system ~a~%" section s)
-  (progn
+  (with-output-to-string (out)
     (maphash #'(lambda (k v)
-                 (format t ";;; ~a for feature ~a~%" section k)
-                 (let ((c (gencode-section v section)))
+                 (format out ";;; ~a for feature ~a~%" section k)
+                 (let ((c (gencode-action v section :activate)))
                    (when c
-                     (format t "~a~%" c))))
+                     (format out "~a~%" c))))
              *uem-features*)))
 
 (defclass UEMShell (UEMSystem)
