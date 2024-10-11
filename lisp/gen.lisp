@@ -15,6 +15,7 @@
                    (progn
                      (load-modules v pkg-path)
                      (with-open-file (out (ensure-directories-exist output) :direction :output
-                                          :if-exists :overwrite)
+                                                                            :if-exists :overwrite
+                                                                            :if-does-not-exist :create)
                        (format out (gencode v k)))))
                *uem-sys*))))

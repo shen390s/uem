@@ -31,3 +31,33 @@
                                       collect `(,k ',(getf args k))))))
       (format t "xargs: ~A ~%" xargs)
       xargs)))
+
+(defun normalize-feature-or-option (feature-or-option)
+  (let ((s (symbol-name feature-or-option)))
+    (cond
+      ((eql (aref s 0) #\+)
+       (list (intern (subseq s 1 (length s))) 1))
+      ((eql (aref s 0) #\-)
+       (list (intern (subseq s 1 (length s)))  -1))
+      (t (list feature-or-option  1)))))
+
+(defun normalize-feature (feature)
+  (cond
+    ((listp feature)
+     (let ((fname (car feature))
+           (options (cdr feature)))
+         `(,fname  1 ,@options)))
+    (t (normalize-feature-or-option feature))))
+
+(defun normalize-feature-list (features)
+  ;;(format t "normalize feature list: ~a~%" features)
+  (loop for f in features
+        collect `,(normalize-feature f)))
+
+(defun get-value (val-or-func &rest args)
+  (let ((v (cond
+             ((functionp val-or-func) (funcall val-or-func args))
+             (t (with-output-to-string (out)
+                  (format out "~a" val-or-func))))))
+    (format t "get-value ~a args: ~a = ~a~%" val-or-func args v)
+    v))

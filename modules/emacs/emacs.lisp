@@ -4,6 +4,7 @@
       :modes
       ()
       :app
-      (emacs-server))
+      ((emacs-server :port 300)
+       (sly :fancy 1)))
 
 (format t "Hello from loading file~%")

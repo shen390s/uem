@@ -16,6 +16,8 @@
                  (:file "const")
                  (:file "core-feat")
                  (:file "core-sys")
+                 (:file "core-emacs")
+                 (:file "core-shell")
                  (:file "core")
                  (:file "gen")
                  (:file "utils"))))

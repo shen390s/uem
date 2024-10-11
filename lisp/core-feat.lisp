@@ -25,8 +25,8 @@
       (cond
         ((member section '(:init :config))
          (cond
-           ((eql section :init) init)
-           (t config)))
+           ((eql section :init) (get-value init))
+           (t (get-value config))))
         ((member section sections)
          (cond
            ((eql section :modes)
@@ -35,14 +35,15 @@
                 ((eql action :activate)
                  (with-output-to-string (out)
                    (format out "add-hook ~a-mode-hook ~%(lambda () ~% ~a~%)"
-                           mode activate)))
+                           mode (get-value activate))))
                 ((eql action :deactivate)
                  (with-output-to-string (out)
                    (format out "add-hook ~a-mode-hook ~%(lambda () ~% ~a~%)"
-                           mode deactivate)))
+                           mode (get-value deactivate))))
                 (t ""))))
            (t (cond
-                ((eql action :activate) activate)
-                ((eql action :deactivate) deactivate)
+                ((eql action :activate) (get-value activate))
+                ((eql action :deactivate) (get-value deactivate))
                 ( t "")))))
         (t "")))))
+
