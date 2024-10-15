@@ -1,5 +1,5 @@
 (feat! sly
-       :sections (:app)
+       :scopes (:app)
        :init
        (progn
          (straight-use-package 'sly))
