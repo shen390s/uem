@@ -1,14 +1,8 @@
 (in-package :uem)
 
 ;; uem-system
-;; emacs
-;;   scopes:
-;;     init, core, modes,ui, app, completion, editor
-;; shell
-;;   scopes:
-;;     init, ...
 
-(defgeneric gencode (s name)
+(defgeneric gencode (s output name)
             (:documentation "Generate the code of UEM system"))
 
 (defgeneric load-modules (s path)
@@ -20,14 +14,26 @@
 (defgeneric scopes (s)
             (:documentation "Scope of generated code"))
 
-(defgeneric gencode-scope (s scope)
-            (:documentation "Generate scope code for system"))
+(defgeneric add-scope (s scope)
+            (:documentation "Add scope to system"))
+
+(defgeneric scope (s scope)
+            (:documentation "Get scope"))
 
 (defclass UEMSystem ()
   ((sysname :initarg :sysname
             :initform "Unknown")
+   (scopes  :initform nil)
    (init :initarg :init
          :initform nil)))
+
+(defmethod initialize-instance :before ((s UEMSystem) &key)
+           (with-slots (scopes) s
+             (setf scopes (make-hash-table))))
+
+(defmethod add-scope ((s UEMSystem) (scope UEMScope))
+           (with-slots (scopes) s
+             (setf (gethash (name scope) scopes) scope)))
 
 (defmethod load-modules ((s UEMSystem) dir)
            (cl-fad::walk-directory dir
@@ -35,16 +41,20 @@
                                        (do-load s filename))))
 
 (defmethod scopes ((s UEMSystem))
-           nil)
+           (with-slots (scopes) s
+             (loop for n being the hash-keys in scopes
+                   collect n)))
 
-(defmethod gencode-scope ((s UEMSystem) scope)
-           (format t  "Generate code for scope ~a~%" scope)
-           "")
+(defmethod scope ((s UEMSystem) scope)
+           (with-slots (scopes) s
+             (gethash scope scopes)))
 
-(defmethod gencode ((s UEMSystem) name)
-           (with-output-to-string (out)
-                                  (loop for scope in (scopes s)
-                                        do (format out (gencode-scope s scope)))))
+(defmethod gencode ((s UEMSystem) output name)
+           (format t "Generate code for ~a~%" s)
+           (loop for sc in (scopes s)
+                 do (let ((c (scope  s sc)))
+                      (when c
+                        (gencode c output 'call)))))
 
 (defmethod do-load ((s UEMSystem) filename)
            (let ((ftype (pathname-type filename)))
@@ -52,60 +62,12 @@
                  (progn
                    (format t "Loading file ~a...~%" filename)
                    (in-package :uem)
-                   (load filename))
+                   (let ((*readtable* (copy-readtable nil)))
+                     (progn
+                       ;;(setf (readtable-case *readtable*) :preserve)
+                       (load filename))))
                (format t "Ignore file ~a~%" filename))))
 
 (defclass UEMUnknown (UEMSystem)
   ())
 
-(defclass UEMEmacs (UEMSystem)
-  ((app :initarg :app
-        :initform nil)
-   (core :initarg :core
-         :initform nil)
-   (ui :initarg :ui
-       :initform nil)
-   (modes :initarg :modes
-          :initform nil)
-   (complete :initarg :complete
-             :initform nil)))
-
-(defmethod initialize-instance :after ((s UEMEmacs) &key)
-           (with-slots (core ui modes complete app) s
-             (setf core (normalize-feature-list core))
-             (setf app (normalize-feature-list app))
-             (setf ui (normalize-feature-list ui))
-             (setf complete (normalize-feature-list complete))
-             ;; FIXME: add process of modes here
-             (format t "core: ~a~%" core)
-             (format t "app: ~a~%" app)))
-
-(defmethod scopes ((s UEMEmacs))
-           '(:init :core :ui :modes :complete :app))
-
-(defmethod gencode-scope ((s UEMEmacs) scope)
-           (format t "Generate code for ~a system ~a~%" scope s)
-           (with-output-to-string (out)
-                                  (with-slots (init app core ui modes complete) s
-                                    (cond
-                                     ((eql scope :init)
-                                      (progn
-                                        (format out "~a~%" init)
-                                        (maphash #'(lambda (k v)
-                                                     (format out ";;; ~a for feature ~a~%" scope k)
-                                                     (let ((c (gencode-action v :ignore `(,scope))))
-                                                       (when c
-                                                         (format out "~a~%" c))))
-                                                 *uem-features*)))
-                                     (t (maphash #'(lambda (k v)
-                                                     (format out ";;; ~a for feature ~a~%" scope k)
-                                                     (let ((c (gencode-action v :ignore `(,scope))))
-                                                       (when c
-                                                         (format out "~a~%" c))))
-                                                 *uem-features*))))))
-
-(defclass UEMShell (UEMSystem)
-  ())
-
-(defclass UEMFish (UEMShell)
-  ())

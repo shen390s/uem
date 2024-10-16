@@ -18,20 +18,6 @@
                                  collect line))
                    (ext:run-shell-command (format nil "~{~A~^ ~}" args))))))
 
-(defun collect-lists (acc lists)
-  (if lists
-      (collect-lists (append acc (car lists))
-                     (cdr lists))
-    acc))
-  
-(defun quote-keyword-args (args)
-  (let ((keywords (remove-if-not #'keywordp args)))
-    (let ((xargs (collect-lists nil
-                                (loop for k in keywords
-                                      collect `(,k ',(getf args k))))))
-      (format t "xargs: ~A ~%" xargs)
-      xargs)))
-
 (defun normalize-feature-or-option (feature-or-option)
   (let ((s (symbol-name feature-or-option)))
     (cond
@@ -54,10 +40,13 @@
   (loop for f in features
         collect `,(normalize-feature f)))
 
-(defun get-value (val-or-func &rest args)
+(defun as-string (v)
+  (with-output-to-string (output)
+    (format output "~a" v)))
+
+(defun get-value (val-or-func args)
   (let ((v (cond
-             ((functionp val-or-func) (funcall val-or-func args))
-             (t (with-output-to-string (out)
-                  (format out "~a" val-or-func))))))
+             ((functionp val-or-func) (apply val-or-func args))
+             (t (as-string val-or-func)))))
     (format t "get-value ~a args: ~a = ~a~%" val-or-func args v)
     v))

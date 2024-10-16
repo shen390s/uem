@@ -17,5 +17,5 @@
                      (with-open-file (out (ensure-directories-exist output) :direction :output
                                                                             :if-exists :overwrite
                                                                             :if-does-not-exist :create)
-                       (format out (gencode v k)))))
+                       (gencode v out k))))
                *uem-sys*))))

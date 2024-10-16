@@ -15,6 +15,7 @@
                  (:file "version")
                  (:file "const")
                  (:file "core-feat")
+                 (:file "core-scope")
                  (:file "core-sys")
                  (:file "core-emacs")
                  (:file "core-shell")
