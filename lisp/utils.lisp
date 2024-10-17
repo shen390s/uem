@@ -50,3 +50,23 @@
              (t (as-string val-or-func)))))
     (format t "get-value ~a args: ~a = ~a~%" val-or-func args v)
     v))
+
+(defun copy-until-tag (si so tag)
+  (format t "copying data...~%")
+  (handler-case
+      (let ((v (read-line si)))
+        (when (not (string= v tag))
+          (format so "~a~%" v)
+          (copy-until-tag si so tag)))
+    (end-of-file (c) t)))
+
+(defun read-doc-here (stream ch1 ch2)
+  (format t "read-doc-here~%")
+  (let* ((tag (read-line stream stream nil "")))
+    (with-output-to-string (out)
+      (copy-until-tag stream out tag))))
+
+(defun quote-non-string (x)
+  (if (stringp x)
+      x
+      (quote x)))

@@ -1,6 +1,7 @@
 (sys! emacs
-      :init '(progn
-              (message "hello from emacs"))
+      :init
+      (progn
+        (message \"hello from emacs\"))
       :modes
       ((c +flymake +lsp)
        (python -flymake +lsp))

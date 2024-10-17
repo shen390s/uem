@@ -62,10 +62,8 @@
                  (progn
                    (format t "Loading file ~a...~%" filename)
                    (in-package :uem)
-                   (let ((*readtable* (copy-readtable nil)))
-                     (progn
-                       ;;(setf (readtable-case *readtable*) :preserve)
-                       (load filename))))
+                   (progn
+                     (load filename)))
                (format t "Ignore file ~a~%" filename))))
 
 (defclass UEMUnknown (UEMSystem)
