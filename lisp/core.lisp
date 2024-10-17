@@ -15,6 +15,7 @@
 
 (defmacro feat! (name &rest args)
   (let* ((xargs (normalize-args args)))
+    (format t "feat! args:~a ~%" xargs)
     `(let ((feature (make-instance 'UEMFeature
                                    :name ',name
                                    ,@xargs)))

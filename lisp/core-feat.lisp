@@ -1,7 +1,7 @@
 (in-package :uem)
 
 (defgeneric gencode-action (f action ctx args)
-            (:documentation "Generate code for action"))
+  (:documentation "Generate code for action"))
 
 (defgeneric invoke-feature (f action ctx args)
   (:documentation "invoke feature functions"))
@@ -32,28 +32,24 @@
 (defmethod invoke-feature ((f UEMFeature) action ctx args)
   (format t "invoking feature ~a action ~a args ~a ~%"
           (name f) action args)
-            (cond
-             ((eql action 'init) (gencode-action f 'init ctx args))
-             ((eql action 'config) (gencode-action f 'config ctx args))
-             ((eql action 'call)
-              (if (= (getf args (name f)) 1)
-                  (gencode-action f 'activate ctx args)
-                  (gencode-action f 'deactivate ctx args)))
-             (t t)))
+  (case action
+    ((:INIT :CONFIG)
+     (gencode-action f action ctx args))
+    ((:CALL)
+     (if (= (getf args (name f)) 1)
+         (gencode-action f :activate ctx args)
+         (gencode-action f :deactivate ctx args)))
+    (otherwise "")))
 
 (defmethod gencode-action ((f UEMFeature) action ctx args)
-           (format t "Generate action ~a code for feature ~%" action)
-           (with-slots (init activate deactivate scopes) f
-             (let ((scope (car ctx)))
-               (format t "scope is ~a~%" scope)
-               (cond
-                 ((member action '(init config))
-                  (if (eql action 'init)
-                      (get-value init args)
-                      (get-value config args)))
-                 ((eql action 'activate)
-                  (get-value activate args))
-                 (t (get-value deactivate args))))))
-
-
-
+  (format t "Generate action ~a code for feature ctx ~a args ~a~%"
+          action ctx args)
+  (with-slots (init activate deactivate config) f
+    (let ((scope (car ctx)))
+      (format t "scope is ~a~%" scope)
+      (case action
+        ((:INIT) (get-value init args))
+        ((:CONFIG) (get-value config args))
+        ((:ACTIVATE) (get-value activate args))
+        ((:DEACTIVATE) (get-value deactivate args))
+        (otherwise "")))))
