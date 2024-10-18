@@ -26,4 +26,6 @@
   (with-slots (entry) f
     (let ((scope (car ctx)))
       (format t "scope is ~a~%" scope)
-      (get-value entry action args))))
+      (let ((*readtable* (copy-readtable nil)))
+        (setf (readtable-case *readtable*) :preserve)
+        (get-value entry action args)))))

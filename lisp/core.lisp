@@ -33,3 +33,9 @@
 
 (defun feat-get (name)
   (gethash name *uem-features*))
+
+(defun call-feature-by-name (name output action args)
+  (let ((f (feat-get name)))
+    (if f
+        (gencode f output action args)
+      (format t "feature: can not be found~%"))))

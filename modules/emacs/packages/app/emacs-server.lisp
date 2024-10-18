@@ -1,6 +1,6 @@
 (defun emacs-server-entry (action args)
   (case action
-        ((:START) "(server-start)")
+        ((:ACTIVATE) "(server-start)")
         (otherwise "")))
 
 (feat! emacs-server

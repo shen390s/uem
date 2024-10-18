@@ -22,17 +22,17 @@
   (let ((s (symbol-name feature-or-option)))
     (cond
       ((eql (aref s 0) #\+)
-       (list (intern (subseq s 1 (length s))) 1))
+       (list (intern (subseq s 1 (length s))) :activate))
       ((eql (aref s 0) #\-)
-       (list (intern (subseq s 1 (length s)))  -1))
-      (t (list feature-or-option  1)))))
+       (list (intern (subseq s 1 (length s)))  :deactivate))
+      (t (list feature-or-option  :activate)))))
 
 (defun normalize-feature (feature)
   (cond
     ((listp feature)
      (let ((fname (car feature))
            (options (cdr feature)))
-         `(,fname  1 ,@options)))
+         `(,fname  :activate ,@options)))
     (t (normalize-feature-or-option feature))))
 
 (defun normalize-feature-list (features)
@@ -54,20 +54,17 @@
             val-or-func action args v)
     v))
 
-(defun copy-until-tag (si so tag)
-  (format t "copying data...~%")
-  (handler-case
-      (let ((v (read-line si)))
-        (when (not (string= v tag))
-          (format so "~a~%" v)
-          (copy-until-tag si so tag)))
-    (end-of-file (c) t)))
-
-(defun read-doc-here (stream ch1 ch2)
-  (format t "read-doc-here~%")
-  (let* ((tag (read-line stream stream nil "")))
-    (with-output-to-string (out)
-      (copy-until-tag stream out tag))))
+;; here reader for #/ .... /#
+(defun read-doc-here (stream char arg)
+  (declare (ignore char arg))
+  (with-output-to-string (str)
+    (loop :for char := (read-char stream) :do
+      (if (and (char= #\/ char)
+               (char= #\# (peek-char nil stream)))
+          (progn
+            (read-char stream)
+            (loop-finish))
+          (write-char char str)))))
 
 (defun quote-non-string (x)
   (if (stringp x)
