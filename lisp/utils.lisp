@@ -44,11 +44,14 @@
   (with-output-to-string (output)
     (format output "~a" v)))
 
-(defun get-value (val-or-func args)
+(defun get-value (val-or-func action args)
   (let ((v (cond
-             ((functionp val-or-func) (apply val-or-func args))
+            ((functionp val-or-func) (funcall val-or-func
+                                              action
+                                              args))
              (t (as-string val-or-func)))))
-    (format t "get-value ~a args: ~a = ~a~%" val-or-func args v)
+    (format t "get-value ~a action ~a args: ~a = ~a~%"
+            val-or-func action args v)
     v))
 
 (defun copy-until-tag (si so tag)

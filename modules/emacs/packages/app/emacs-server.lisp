@@ -1,4 +1,11 @@
+(defun emacs-server-entry (action args)
+  (case action
+        ((:START) "(server-start)")
+        (otherwise "")))
+
 (feat! emacs-server
-       :scopes (:app)
-       :activate (server-start))
+       "emacs editor server"
+       (:app)
+       emacs-server-entry)
+       
 

@@ -6,23 +6,22 @@
 (defvar *uem-sys* (make-hash-table)
   "All defined system goes here")
 
-(defun normalize-args (args)
-  (mapcar #'(lambda (x)
-              (if (consp x)
-                  `',x
-                  x))
-          args))
-
-(defmacro feat! (name &rest args)
-  (let* ((xargs (normalize-args args)))
-    (format t "feat! args:~a ~%" xargs)
-    `(let ((feature (make-instance 'UEMFeature
-                                   :name ',name
-                                   ,@xargs)))
-       (setf (gethash ',name *uem-features*) feature))))
+(defmacro feat! (name description scopes entry)
+  (format t "feat! name ~a scopes ~a entry ~a ~%"
+          name scopes entry)
+  `(let ((feature (make-instance 'UEMFeature
+                                 :name ',name
+                                 :description ,description
+                                 :scopes ',scopes
+                                 :entry #',entry)))
+       (setf (gethash ',name *uem-features*) feature)))
 
 (defmacro sys! (name &rest args)
-  (let* ((xargs (normalize-args args)))
+  (let* ((xargs (mapcar #'(lambda (x)
+                            (if (keywordp x)
+                                x
+                              `(funcall #',x)))
+                        args)))
     (format t "sys! args: ~a~%" xargs)
     `(let ((sn (cond
                  ((eql ',name 'emacs) 'UEMEmacs)

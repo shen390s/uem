@@ -62,7 +62,7 @@
                (let ((feat (feat-get nf)))
                  (when feat
                    (let ((ctx (list s)))
-                     (let ((c (invoke-feature feat action ctx f)))
+                     (let ((c (gencode-action feat action ctx f)))
                        (when c
                          (format output "~a~%" c))))))))))
 
