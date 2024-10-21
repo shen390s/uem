@@ -6,6 +6,9 @@
 (defvar *uem-sys* (make-hash-table)
   "All defined system goes here")
 
+(defvar *uem-module-root* nil
+  "The root directory of load module")
+
 (defmacro feat! (name description scopes entry)
   (format t "feat! name ~a scopes ~a entry ~a ~%"
           name scopes entry)

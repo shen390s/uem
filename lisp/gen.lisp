@@ -9,6 +9,11 @@
     (set-dispatch-macro-character #\# #\/ #'read-doc-here)
     (format t "macro dispatch: ~a~%"
             (get-dispatch-macro-character #\# #\/))
+    (setf module-path (uiop/filesystem:truename* module-path))
+    (setf *uem-module-root*
+          (make-pathname :name nil
+                         :type nil
+                         :defaults module-path))
     (load module-path :verbose t :print t)
     (let ((pkg-path (make-pathname :name "packages"
                                    :type nil

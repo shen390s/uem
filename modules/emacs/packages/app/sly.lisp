@@ -1,7 +1,7 @@
 (defun sly-entry (action args)
   (case action
         ((:INIT) #/(progn
-                     (straight-use-package 'sly))
+                     (pkginstall 'sly))
 /#
          )
         ((:CALL) #/(progn

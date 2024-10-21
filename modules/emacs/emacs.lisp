@@ -1,30 +1,17 @@
 (defun emacs-init ()
   #/(progn
+      (setq emacs-config-dir "~/.config/emacs/uem")
+      (unless (file-exists-p emacs-config-dir)
+        (make-directory emacs-config-dir))
+      (setq custom-file (concat emacs-config-dir "/custom.el"))
       (setq custom-safe-themes t)
       (setenv "HTTPS_PROXY" "sock5://localhost:8118")
-      (setenv "HTTP_PROXY" "socks5://localhost:8118")
-      (defvar bootstrap-version)
-      (let ((bootstrap-file
-              (expand-file-name
-               "straight/repos/straight.el/bootstrap.el"
-               (or (bound-and-true-p straight-base-dir)
-                   user-emacs-directory)))
-            (bootstrap-version 7))
-        (unless (file-exists-p bootstrap-file)
-          (with-current-buffer
-              (url-retrieve-synchronously
-               "https://raw.githubusercontent.com/radian-software/straight.el/develop/install.el"
-               'silent 'inhibit-cookies)
-            (goto-char (point-max))
-            (eval-print-last-sexp)))
-        (load bootstrap-file nil 'nomessage)))
+      (setenv "HTTP_PROXY" "socks5://localhost:8118"))
 /#
       )
 
   (defun emacs-core ()
-    '((pkg-mirrors  ;; :mirrors (github . "hub.fastgit.org")
-       ;;:mirrors (github . "github.com.cnpmjs.org")
-       :local-repo user "Emacs/pkg.mirrors")))
+    '(straight))
 
   (defun emacs-modes ()
     '((c +eldoc +guess-c-style +call-graph +which-func)
@@ -36,12 +23,12 @@
       (poly-asciidoc +livemarkup)
       (tex +auctex +magic-latex)
       (fundamental +hlinum +ruler +smartparens) 
-      (prog -flymake)))
+      (prog +hlinum +ruler +smartparens +rainbow-delimiters +rainbow-identifiers -flymake)))
 
   (defun emacs-ui ()
     '((evil)
       (smart-mode-line)
-      (load-custom :theme rshen)
+      (load-custom :theme "rshen")
       (smex)
       (icicles)
       (powerline +airline-themes :theme airline-light)

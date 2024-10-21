@@ -11,7 +11,9 @@
   (case action
     ((:INIT)
      (with-slots (data) s
-       (format output "~a~%" data)))
+       (format output "~a~%" data)
+       (format output "(setq *module-root-path* \"~a\")~%"
+               *uem-module-root*)))
     (otherwise "")))
 
 (defclass EmacsGenericScope (UEMFeatureScope)
@@ -127,7 +129,7 @@
                         (make-instance 'EmacsGenericScope
                                        :name :complete
                                        :sys s
-                                       :data core))
+                                       :data complete))
              (add-scope s
                         (make-instance 'EmacsModeScope
                                        :name :modes
