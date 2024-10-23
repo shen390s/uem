@@ -71,3 +71,6 @@
   (if (stringp x)
       x
       (quote x)))
+
+(defun mk-keyword (k)
+  (intern (format nil ":~a" k)))

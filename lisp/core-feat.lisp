@@ -1,6 +1,6 @@
 (in-package :uem)
 
-(defgeneric gencode-action (f action ctx args)
+(defgeneric gencode-action (f action args)
   (:documentation "Generate code for action"))
 
 (defgeneric name (f)
@@ -14,12 +14,12 @@
    (entry :initarg :entry
           :initform nil)))
 
-(defmethod gencode-action ((f UEMFeature) action ctx args)
-  (format t "Generate action ~a code for feature ctx ~a args ~a~%"
-          action ctx args)
+(defmethod gencode-action ((f UEMFeature) action args)
+  (format t "Generate action ~a code for feature args ~a~%"
+          action args)
   (with-slots (entry) f
-    (let ((scope (car ctx)))
-      (format t "scope is ~a~%" scope)
+    (let ((o (owner f)))
+      (format t "owner is ~a~%" o)
       (let ((*readtable* (copy-readtable nil)))
         (setf (readtable-case *readtable*) :preserve)
         (get-value entry f action args)))))
