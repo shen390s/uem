@@ -1,4 +1,4 @@
-(defun undo-tree-entry (action args)
+(defun undo-tree-entry (self action args)
   (case action
         ((:INIT)
          #/

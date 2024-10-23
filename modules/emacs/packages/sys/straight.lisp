@@ -1,4 +1,4 @@
-(defun straight-entry (action args)
+(defun straight-entry (self action args)
   (case action
         ((:INIT)
          #/

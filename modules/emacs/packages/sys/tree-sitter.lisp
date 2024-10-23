@@ -1,4 +1,4 @@
-(defun tree-sitter-entry (action args)
+(defun tree-sitter-entry (self action args)
   (case action
         ((:INIT)
          #/

@@ -1,4 +1,4 @@
-(defun hlinum-entry (action args)
+(defun hlinum-entry (self action args)
   (case action
 	((:INIT)
 	 #/

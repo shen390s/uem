@@ -1,4 +1,4 @@
-(defun smartparens-entry (action args)
+(defun smartparens-entry (self action args)
   (case action
         ((:INIT)
          #/

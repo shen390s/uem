@@ -33,7 +33,8 @@
           do (let* ((nf (car f))
                     (sf (getf f nf)))
                (format t "nf ~a sf ~a ~%" nf sf)
-               (let ((feat (feat-get nf)))
+               (let ((feat (feat-get nf s)))
+                 (format t "get feature = ~a~%" feat)
                  (if feat
                    (let ((ctx (list s)))
                      (let ((c (gencode-action feat action ctx f)))

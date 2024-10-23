@@ -1,4 +1,4 @@
-(defun rainbow-delimiters-entry (action args)
+(defun rainbow-delimiters-entry (self action args)
   (case action
         ((:INIT)
          #/

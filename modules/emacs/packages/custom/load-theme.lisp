@@ -1,4 +1,4 @@
-(defun load-custom-entry (action args)
+(defun load-custom-entry (self action args)
   (case action
     ((:INIT)
      (let ((themes (getf args :theme))

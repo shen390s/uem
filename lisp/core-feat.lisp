@@ -7,18 +7,12 @@
   (:documentation "name of feature"))
 
 (defclass UEMFeature (UEMObject)
-  ((feature-name :initarg :name
-                 :initform "unknown")
-   (description :initarg :description
+  ((description :initarg :description
                 :initform nil)
    (scopes :initarg :scopes
            :initform nil)
    (entry :initarg :entry
           :initform nil)))
-
-(defmethod name ((f UEMFeature))
-  (with-slots (feature-name) f
-    feature-name))
 
 (defmethod gencode-action ((f UEMFeature) action ctx args)
   (format t "Generate action ~a code for feature ctx ~a args ~a~%"
@@ -28,4 +22,10 @@
       (format t "scope is ~a~%" scope)
       (let ((*readtable* (copy-readtable nil)))
         (setf (readtable-case *readtable*) :preserve)
-        (get-value entry action args)))))
+        (get-value entry f action args)))))
+
+(defun make-feature (name owner data)
+  (make-instance (intern name)
+                 :name name
+                 :owner owner
+                 :data data))

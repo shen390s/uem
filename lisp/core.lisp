@@ -1,23 +1,24 @@
 (in-package :uem)
 
-(defvar *uem-features* (make-hash-table)
-  "All defined features go here")
-
-(defvar *uem-sys* (make-hash-table)
+(defvar *uem-sys* nil
   "All defined system goes here")
 
 (defvar *uem-module-root* nil
   "The root directory of load module")
 
-(defmacro feat! (name description scopes entry)
-  (format t "feat! name ~a scopes ~a entry ~a ~%"
-          name scopes entry)
-  `(let ((feature (make-instance 'UEMFeature
-                                 :name ',name
-                                 :description ,description
-                                 :scopes ',scopes
-                                 :entry #',entry)))
-       (setf (gethash ',name *uem-features*) feature)))
+(defmacro feat! (fname fdescription fscopes fentry)
+  (format t "feat! name ~a scopes ~a entry ~a~%"
+          fname fdescription fscopes fentry)
+  `(progn
+     (defclass ,fname (UEMFeature)
+       ())
+
+     (defmethod initialize-instance :after ((f ,fname) &key)
+                (with-slots (name description scopes entry) f
+                  (setf name (symbol-name ',fname))
+                  (setf description ,fdescription)
+                  (setf scopes ',fscopes)
+                  (setf entry #',fentry)))))
 
 (defmacro sys! (name &rest args)
   (let* ((xargs (mapcar #'(lambda (x)
@@ -30,15 +31,16 @@
                  ((eql ',name 'emacs) 'UEMEmacs)
                  ((eql ',name 'fish) 'UEMFish)
                  (t 'UEMUnknown))))
-         (let ((s (make-instance sn
-                                 ,@xargs)))
-           (setf (gethash ',name *uem-sys*) s)))))
+         (setf *uem-sys* (make-instance sn
+                                        ,@xargs)))))
 
-(defun feat-get (name)
-  (gethash name *uem-features*))
+(defun feat-get (name owner)
+  (handler-case
+      (progn
+        (format t "feat-get ~a ~a~%"
+                name owner)
+        (make-instance name
+                       :name (symbol-name name)
+                       :owner owner))
+    (SB-PCL:CLASS-NOT-FOUND-ERROR () nil)))
 
-(defun call-feature-by-name (name output action args)
-  (let ((f (feat-get name)))
-    (if f
-        (gencode f output action args)
-      (format t "feature: can not be found~%"))))

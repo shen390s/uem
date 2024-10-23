@@ -44,14 +44,15 @@
   (with-output-to-string (output)
     (format output "~a" v)))
 
-(defun get-value (val-or-func action args)
+(defun get-value (val-or-func self action args)
   (let ((v (cond
             ((functionp val-or-func) (funcall val-or-func
+                                              self
                                               action
                                               args))
              (t (as-string val-or-func)))))
-    (format t "get-value ~a action ~a args: ~a = ~a~%"
-            val-or-func action args v)
+    (format t "get-value ~a self ~a action ~a args: ~a = ~a~%"
+            val-or-func self action args v)
     v))
 
 ;; here reader for #/ .... /#

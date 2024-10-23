@@ -1,4 +1,4 @@
-(defun sly-entry (action args)
+(defun sly-entry (self action args)
   (case action
         ((:INIT) #/(progn
                      (pkginstall 'sly))
