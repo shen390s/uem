@@ -51,15 +51,15 @@
                             (mode-entry s))))
                  (otherwise "")))
 
-(defun make-emacs-mode (name sys data)
+(defun make-emacs-mode (name owner data)
   (handler-case
       (progn
         (make-instance (intern (format nil "EmacsMode/~a" name))
                        :name name
-                       :sys sys
+                       :owner owner
                        :data data))
     (SB-PCL:CLASS-NOT-FOUND-ERROR ()
                                   (make-instance 'EmacsGenericMode
                                                  :name name
-                                                 :sys sys
+                                                 :owner owner
                                                  :data data))))

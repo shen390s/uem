@@ -23,10 +23,28 @@
 (defgeneric cmp-scope (s s1 s2)
   (:documentation "Compare scope s1 s2"))
 
-(defclass UEMSystem ()
-  ((sysname :initarg :sysname
-            :initform "Unknown")
-   (scopes  :initform nil)
+(defgeneric owner (s)
+	    (:documentation "Get owner of object"))
+
+(defgeneric name (s)
+	    (:documentation "Get name of object"))
+
+(defclass UEMObject ()
+  ((owner :initarg :owner
+	  :initform nil)
+   (name :initarg :name
+	 :initform "unknown")))
+
+(defmethod owner ((o UEMObject))
+	   (with-slots (owner) o
+	     owner))
+
+(defmethod name ((o UEMObject))
+	   (with-slots (name) o
+	     name))
+
+(defclass UEMSystem (UEMObject)
+  ((scopes  :initform nil)
    (init :initarg :init
          :initform nil)))
 

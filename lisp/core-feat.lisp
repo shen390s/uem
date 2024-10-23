@@ -6,7 +6,7 @@
 (defgeneric name (f)
   (:documentation "name of feature"))
 
-(defclass UEMFeature ()
+(defclass UEMFeature (UEMObject)
   ((feature-name :initarg :name
                  :initform "unknown")
    (description :initarg :description

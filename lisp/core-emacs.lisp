@@ -39,7 +39,7 @@
                             (fs (cdr m)))
                         (progn
                           (format t "Adding scope ~a ~a ~%" nm fs)
-                          (add-scope s (make-emacs-mode nm (sys s) fs)))))))
+                          (add-scope s (make-emacs-mode nm  s fs)))))))
 
 (defmethod gencode ((s EmacsModeScope) output action)
            (format t "gencode ~a action ~a ~%" s action)
@@ -70,37 +70,37 @@
              (add-scope s
                         (make-instance 'EmacsInitScope
                                        :name :init
-                                       :sys s
+                                       :owner s
                                        :data init))
              (add-scope s
                         (make-instance 'EmacsGenericScope
                                        :name :core
-                                       :sys s
+                                       :owner s
                                        :data core))
              (add-scope s
                         (make-instance 'EmacsGenericScope
                                        :name :app
-                                       :sys s
+                                       :owner s
                                        :data app))
              (add-scope s
                         (make-instance 'EmacsGenericScope
                                        :name :editor
-                                       :sys s
+                                       :owner s
                                        :data editor))
              (add-scope s
                         (make-instance 'EmacsGenericScope
                                        :name :ui
-                                       :sys s
+                                       :owner s
                                        :data ui))
              (add-scope s
                         (make-instance 'EmacsGenericScope
                                        :name :complete
-                                       :sys s
+                                       :owner s
                                        :data complete))
              (add-scope s
                         (make-instance 'EmacsModeScope
                                        :name :modes
-                                       :sys s
+                                       :owner s
                                        :data modes))
              (format t "emacs scope initialized~%")))
 
