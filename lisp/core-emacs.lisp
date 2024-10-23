@@ -39,46 +39,13 @@
                             (fs (cdr m)))
                         (progn
                           (format t "Adding scope ~a ~a ~%" nm fs)
-                          (add-scope s
-                                     (make-instance 'EmacsMode
-                                                    :name nm
-                                                    :sys (sys s)
-                                                    :data fs)))))))
+                          (add-scope s (make-emacs-mode nm (sys s) fs)))))))
 
 (defmethod gencode ((s EmacsModeScope) output action)
            (format t "gencode ~a action ~a ~%" s action)
            (with-slots (scopes) s
              (loop for c in scopes
                    do (gencode c output action))))
-
-(defclass EmacsMode (EmacsGenericScope)
-  ())
-
-(defmethod gencode :before ((s EmacsMode) output action)
-           (case action
-                 ((:CALL)
-                  (format output "(add-hook '~a-mode-hook~% #'(lambda ()~%"
-                          (string-downcase (name s))))
-                 (otherwise t)))
-
-(defmethod gencode :after ((s EmacsMode) output action)
-           (case action
-                 ((:CALL)
-                  (format output "))~%"))
-                 (otherwise t)))
-
-;; (defmethod gencode ((s EmacsMode) output action)
-;;            (with-slots (features) s
-;;              (case action
-;;                    ((:CALL)
-;;                     (progn
-;;                       (format output ";;; mode features: ~a~%" features)
-;;                       (loop for f in features
-;;                             do (let ((fn (car f))
-;;                                      (act (cadr f))
-;;                                      (args (cddr f)))
-;;                                  (call-feature-by-name fn output act args)))))
-;;                    (otherwise t))))
 
 (defclass UEMEmacs (UEMSystem)
   ((app :initarg :app

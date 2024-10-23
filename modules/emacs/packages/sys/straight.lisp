@@ -21,6 +21,7 @@
         (defun pkginstall (pkg)
            (progn
              (straight-use-package pkg)))   
+        (straight-pull-package "melpa")
 /#
          )
         (otherwise "")))

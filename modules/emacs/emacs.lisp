@@ -5,6 +5,7 @@
         (make-directory emacs-config-dir))
       (setq custom-file (concat emacs-config-dir "/custom.el"))
       (setq custom-safe-themes t)
+      ;;(setq tsc-dyn-get-from '(:compilation))
       (setenv "HTTPS_PROXY" "sock5://localhost:8118")
       (setenv "HTTP_PROXY" "socks5://localhost:8118"))
 /#
@@ -23,7 +24,7 @@
       (poly-asciidoc +livemarkup)
       (tex +auctex +magic-latex)
       (fundamental +hlinum +ruler +smartparens) 
-      (prog +hlinum +ruler +smartparens +rainbow-delimiters +rainbow-identifiers -flymake)))
+      (prog  +hlinum +ruler +smartparens +rainbow-delimiters +rainbow-identifiers -flymake)))
 
   (defun emacs-ui ()
     '((evil)
@@ -31,8 +32,7 @@
       (load-custom :theme "rshen")
       (smex)
       (icicles)
-      (powerline +airline-themes :theme airline-light)
-      (adjust-display)) )
+      (powerline +airline-themes :theme airline-light)))
 
   (defun emacs-complete ()
     ;;(ivy)
