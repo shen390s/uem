@@ -39,7 +39,7 @@
                  ((:CALL)
                   (format output "(defun ~a ()~%"
                           (mode-entry s)))
-                 (otherwise t)))
+                 (otherwise "")))
 
 (defmethod gencode :after ((s EmacsGenericMode) output action)
            (case action
@@ -49,21 +49,7 @@
                     (format output "(add-hook '~a #'~a)~%"
                             (mode-hook-name s)
                             (mode-entry s))))
-                 (otherwise t)))
-
-;; (defmethod gencode ((s EmacsGenericMode) output action)
-;;            (with-slots (features) s
-;;              (case action
-;;                    ((:CALL)
-;;                     (progn
-;;                       (format output ";;; mode features: ~a~%" features)
-;;                       (loop for f in features
-;;                             do (let ((fn (car f))
-;;                                      (act (cadr f))
-;;                                      (args (cddr f)))
-;;                                  (call-feature-by-name fn output act args)))))
-;;                    (otherwise t))))
-
+                 (otherwise "")))
 
 (defun make-emacs-mode (name sys data)
   (handler-case

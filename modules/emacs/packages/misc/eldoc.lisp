@@ -3,7 +3,7 @@
 	  action args)
   (case action
 	((:INIT)
-	 t)))
+	 "")))
 
 (feat! eldoc
        "eldoc"

@@ -54,7 +54,7 @@
                  (if feat
                    (let ((ctx (list s)))
                      (let ((c (gencode-action feat action ctx f)))
-                       (when c
+                       (when (and c (stringp c))
                          (format output "~a~%" c))))
                    (format output ";;; feature ~a can not be found~%" nf)))))))
 
