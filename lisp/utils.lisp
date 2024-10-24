@@ -73,4 +73,4 @@
       (quote x)))
 
 (defun mk-keyword (k)
-  (intern (format nil ":~a" k)))
+  (read-from-string (format nil ":~a" k)))

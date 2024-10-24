@@ -38,8 +38,8 @@
                           (if feat
                               (let ((c (gencode-action feat action f)))
                                 (when (and c (stringp c))
-                                  (format output "~a~%" c))))
-                          (format output ";;; feature ~a can not be found~%" nf))))))
+                                  (format output "~a~%" c)))
+			      (format output ";;; feature ~a can not be found~%" nf)))))))
 
 (defclass UEMCompoundScope (UEMDataScope)
   ((scopes :initarg :scopes
