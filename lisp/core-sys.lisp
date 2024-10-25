@@ -5,12 +5,6 @@
 (defgeneric gencode (s output name)
   (:documentation "Generate the code of UEM system"))
 
-(defgeneric load-modules (s path)
-  (:documentation "Load modules from path"))
-
-(defgeneric do-load (s path)
-  (:documentation "Load module file"))
-
 (defgeneric scopes (s)
   (:documentation "Scope of generated code"))
 
@@ -56,11 +50,6 @@
   (with-slots (scopes) s
     (setf (gethash (name scope) scopes) scope)))
 
-(defmethod load-modules ((s UEMSystem) dir)
-  (cl-fad::walk-directory dir
-                          #'(lambda (filename)
-                              (do-load s filename))))
-
 (defmethod scopes ((s UEMSystem))
   (with-slots (scopes) s
     (loop for n being the hash-keys in scopes
@@ -81,16 +70,6 @@
                    do (let ((c (scope  s sc)))
                         (when c
                           (gencode c output action)))))))
-
-(defmethod do-load ((s UEMSystem) filename)
-  (let ((ftype (pathname-type filename)))
-    (if (string= ftype "lisp")
-        (progn
-          (format t "Loading file ~a...~%" filename)
-          (in-package :uem)
-          (progn
-            (load filename)))
-        (format t "Ignore file ~a~%" filename))))
 
 (defclass UEMUnknown (UEMSystem)
   ())

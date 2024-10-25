@@ -24,6 +24,7 @@
       (poly-asciidoc +livemarkup)
       (tex +eldoc +auctex +magic-latex)
       (fundamental +hlinum +ruler +smartparens) 
+      (simplex)
       (prog  +hlinum +ruler +smartparens +rainbow-delimiters +rainbow-identifiers -flymake)))
 
   (defun emacs-ui ()
