@@ -38,6 +38,6 @@
 	(load module-path :verbose t :print t)
         (let ((v *uem-sys*))
           (with-open-file (out (ensure-directories-exist output) :direction :output
-								 :if-exists :overwrite
+								 :if-exists :supersede
 								 :if-does-not-exist :create)
 	    (gencode v out (name v))))))))
