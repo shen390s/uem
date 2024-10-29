@@ -11,8 +11,7 @@
 
 (mode! poly-org
        "Poly org mode"
-       (org-mode
-	(poly-org :type git
+       ((poly-org :type git
 		  :host github
 		  :repo "emacsmirror/poly-R"))
        (.r .R))

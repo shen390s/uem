@@ -9,9 +9,6 @@
 (defmethod gencode((s UEMScope) output action)
            (format output ""))
 
-(defgeneric add-scope (cs s)
-            (:documentation "add scope to compound scope"))
-
 (defclass UEMDataScope (UEMScope)
   ((data :initarg :data
          :initform nil)))
@@ -36,19 +33,7 @@
                         (let ((feat (feat-get nf s)))
                           (format t "get feature = ~a~%" feat)
                           (if feat
-                              (let ((c (gencode-action feat action f)))
-                                (when (and c (stringp c))
-                                  (format output "~a~%" c)))
+			      (progn
+				(gencode-action feat output action f))
 			      (format output ";;; feature ~a can not be found~%" nf)))))))
 
-(defclass UEMCompoundScope (UEMDataScope)
-  ((scopes :initarg :scopes
-           :initform nil)))
-
-(defmethod add-scope ((cs UEMCompoundScope) (s UEMScope))
-           (with-slots (scopes) cs
-             (setf scopes (append scopes (list s)))))
-
-(defmethod scopes ((s UEMCompoundScope))
-           (with-slots (scopes) s
-             scopes))

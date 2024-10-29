@@ -24,8 +24,17 @@
                    (name s) action))
 
 
-(defclass EmacsModeScope (UEMCompoundScope)
-  ())
+(defclass EmacsModeScope (UEMDataScope)
+  ((modes :initarg :modes
+	  :initform nil)))
+
+(defmethod add-mode ((s EmacsModeScope) m)
+	   (with-slots (modes) s
+	     (setf modes (append modes (list m)))))
+
+(defmethod modes ((s EmacsModeScope))
+	   (with-slots (modes) s
+	     modes))
 
 (defmethod gencode :before ((s EmacsModeScope) output action)
            (format output ";;; Generate code for scope ~a action ~a ~%"
@@ -39,13 +48,13 @@
                             (fs (cdr m)))
                         (progn
                           (format t "Adding scope ~a ~a ~%" nm fs)
-                          (add-scope s (make-emacs-mode nm  s fs)))))))
+                          (add-mode s (make-emacs-mode nm  s fs)))))))
 
 (defmethod gencode ((s EmacsModeScope) output action)
            (format t "gencode ~a action ~a ~%" s action)
-           (with-slots (scopes) s
-             (loop for c in scopes
-                   do (gencode c output action))))
+           (with-slots (modes) s
+             (loop for c in modes
+                   do (gencode-action c output action nil))))
 
 (defclass UEMEmacs (UEMSystem)
   ((app :initarg :app
