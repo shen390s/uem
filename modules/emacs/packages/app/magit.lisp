@@ -1,4 +1,4 @@
-(defun magit-entry (self action args)
+(defun magit-entry (self action )
   (case action
     ((:INIT)
      #/

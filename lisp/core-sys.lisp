@@ -5,29 +5,37 @@
 (defgeneric gencode (s output name)
   (:documentation "Generate the code of UEM system"))
 
-(defgeneric scopes (s)
-  (:documentation "Scope of generated code"))
+(defgeneric children (o)
+  (:documentation "Child of generated code"))
 
-(defgeneric add-scope (s scope)
-  (:documentation "Add scope to system"))
+(defgeneric add-child (o child)
+  (:documentation "Add child to system"))
 
-(defgeneric scope (s scope)
-  (:documentation "Get scope"))
+(defgeneric child (o n)
+  (:documentation "Get child"))
 
-(defgeneric cmp-scope (s s1 s2)
-  (:documentation "Compare scope s1 s2"))
+(defgeneric cmp-child (o s1 s2)
+  (:documentation "Compare child s1 s2"))
 
-(defgeneric owner (s)
+(defgeneric owner (o)
 	    (:documentation "Get owner of object"))
 
-(defgeneric name (s)
+(defgeneric name (o)
 	    (:documentation "Get name of object"))
+
+(defgeneric parse-config (o)
+	    (:documentation "Parse configuration of UEM object"))
+
+(defgeneric data (o)
+	    (:documentation "Get config data"))
 
 (defclass UEMObject ()
   ((owner :initarg :owner
 	  :initform nil)
    (name :initarg :name
-	 :initform "unknown")))
+	 :initform "unknown")
+   (data :initarg :data
+	 :initform nil)))
 
 (defmethod owner ((o UEMObject))
 	   (with-slots (owner) o
@@ -37,38 +45,79 @@
 	   (with-slots (name) o
 	     name))
 
-(defclass UEMSystem (UEMObject)
-  ((scopes  :initform nil)
-   (init :initarg :init
-         :initform nil)))
+(defmethod data ((o UEMObject))
+	   (with-slots (data) o
+	     data))
 
-(defmethod initialize-instance :before ((s UEMSystem) &key)
-  (with-slots (scopes) s
-    (setf scopes (make-hash-table))))
+(defmethod initialize-instance :after ((o UEMObject) &key)
+	   (parse-config o))
 
-(defmethod add-scope ((s UEMSystem) (scope UEMScope))
-  (with-slots (scopes) s
-    (setf (gethash (name scope) scopes) scope)))
+(defmethod parse-config ((o UEMObject))
+	   t)
 
-(defmethod scopes ((s UEMSystem))
-  (with-slots (scopes) s
-    (loop for n being the hash-keys in scopes
+(defclass UEMContainerObject (UEMObject)
+  ((children :initform (make-hash-table))))
+
+(defmethod add-child ((s UEMContainerObject) (child UEMObject))
+  (with-slots (children) s
+    (setf (gethash (name child) children) child)))
+
+(defmethod children ((s UEMContainerObject))
+  (with-slots (children) s
+    (loop for n being the hash-keys in children
           collect n)))
 
-(defmethod cmp-scope ((s UEMSystem) s1 s2)
+(defmethod cmp-child ((s UEMContainerObject) s1 s2)
   t)
 
-(defmethod scope ((s UEMSystem) scope)
-  (with-slots (scopes) s
-    (gethash scope scopes)))
+(defmethod child ((s UEMContainerObject) n)
+  (with-slots (children) s
+    (gethash n children)))
+
+(defclass UEMFeatureContainer (UEMContainerObject)
+  ())
+
+(defmethod parse-config ((o UEMFeatureContainer))
+	   (with-slots (data children) o 
+	     (format t "parse-config ~a data: ~a~%"
+		     o data)
+	     (loop for f in (normalize-feature-list data)
+		   do (let* ((nf (car f))
+			     (sf (getf f nf))
+			     (feat (feat-get nf o f)))
+			(if feat
+			    (add-child o feat)
+			  (format t "feature ~a can not be found~%"
+				  nf))))))
+
+(defmethod gencode ((o UEMFeatureContainer) output action)
+	   (with-slots (children) o
+	     (loop for n being the hash-keys in children
+		   do (progn
+			(format t "generate code for feature ~a in ~a~%"
+				n (name o))
+			(gencode (child o n) output action)))))
+
+(defgeneric add-scope (s c)
+	    (:documentation "add scope to sys"))
+
+(defclass UEMSystem (UEMContainerObject)
+  ((init :initarg :init
+         :initform nil)))
+
+(defmethod add-scope ((s UEMSystem) c)
+	   (add-child s c))
 
 (defmethod gencode ((s UEMSystem) output name)
-  (let ((sorted-scopes (sort (scopes s) #'(lambda (s1 s2)
-                                            (cmp-scope s s1 s2)))))
-    (loop for action in '(:init :config :call)
-          do (loop for sc in sorted-scopes 
-                   do (let ((c (scope  s sc)))
+  (let ((sorted-children (sort (children s) #'(lambda (s1 s2)
+                                            (cmp-child s s1 s2)))))
+    (loop for action in '(:init :pre-config :config :post-config :pre-call :call :post-call)
+          do (loop for sc in sorted-children 
+                   do (let ((c (child  s sc)))
+			(format t "sc = ~a~%" sc)
                         (when c
+			  (format t "generate code for ~a action ~a~%"
+				  (name c) action)
                           (gencode c output action)))))))
 
 (defclass UEMUnknown (UEMSystem)

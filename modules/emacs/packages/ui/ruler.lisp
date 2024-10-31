@@ -1,4 +1,4 @@
-(defun ruler-entry (self action args)
+(defun ruler-entry (self action)
   (case action
         ((:INIT)
          "")

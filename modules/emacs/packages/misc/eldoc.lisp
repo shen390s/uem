@@ -7,9 +7,9 @@
   (let ((pkgs (getf *eldoc-mode-pkg-map* (mk-keyword m))))
     pkgs))
 
-(defun eldoc-entry (self action args)
-  (format t "eldoc self ~a action ~a args ~a~%"
-	  self action args)
+(defun eldoc-entry (self action )
+  (format t "eldoc self ~a action ~a ~%"
+	  self action )
   (let ((own (owner self)))
     (format t "Owner is ~a~%" own)
     (case action

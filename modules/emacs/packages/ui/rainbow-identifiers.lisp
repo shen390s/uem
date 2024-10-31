@@ -1,4 +1,4 @@
-(defun rainbow-identifiers-entry (self action args)
+(defun rainbow-identifiers-entry (self action )
   (case action
         ((:INIT)
          #/

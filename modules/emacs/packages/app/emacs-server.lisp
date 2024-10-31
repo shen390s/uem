@@ -1,4 +1,4 @@
-(defun emacs-server-entry (self action args)
+(defun emacs-server-entry (self action )
   (case action
         ((:ACTIVATE) "(server-start)")
         (otherwise "")))

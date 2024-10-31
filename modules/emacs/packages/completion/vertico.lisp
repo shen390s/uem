@@ -1,4 +1,4 @@
-(defun vertico-entry (self action args)
+(defun vertico-entry (self action )
   (case action
 	((:INIT)
 	 #/

@@ -6,22 +6,19 @@
 			 :repo "emacsmirror/poly-markdown")
 	(polymode :type git
 		    :host github
-		    :repo "emacsmirror/polymode"))
-       (.md .markdown .mkd .mdown .mkdn .mdwn))
+		    :repo "emacsmirror/polymode")))
 
 (mode! poly-org
        "Poly org mode"
        ((poly-org :type git
 		  :host github
-		  :repo "emacsmirror/poly-R"))
-       (.r .R))
+		  :repo "emacsmirror/poly-R")))
 
 (mode! poly-ascii
        "Poly asciidoc mode"
        (asciidoc-mode
 	(poly-asciidoc :type git
 		      :host github
-		      :repo "shen390s/poly-asciidoc"))
-       (.adoc))
+		      :repo "shen390s/poly-asciidoc")))
 
 

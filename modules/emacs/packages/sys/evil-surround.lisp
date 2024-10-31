@@ -1,4 +1,4 @@
-(defun evil-surround-entry (self action args)
+(defun evil-surround-entry (self action)
   (case action
     ((:INIT)
      #/

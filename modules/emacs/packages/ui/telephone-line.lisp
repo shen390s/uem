@@ -1,4 +1,4 @@
-(defun telephone-line-entry (self action args)
+(defun telephone-line-entry (self action )
   (case action
     ((:INIT)
      #/

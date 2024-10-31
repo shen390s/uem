@@ -12,9 +12,8 @@
 (defgeneric gen-mode-activate (m action args)
 	    (:documentation "generate code for mode activate"))
 
-(defclass EmacsMode (UEMFeature)
-  ((options :initarg :options
-	    :initform nil)))
+(defclass EmacsMode (UEMFeatureContainer)
+  ())
 
 (defmethod mode-name ((m EmacsMode))
 	   (string-downcase
@@ -30,40 +29,26 @@
 	    (format nil "~a-activate"
 		    (name m))))
 
-(defun emacs-mode-entry (self action args)
-  (format t "call mode entry self ~a(name ~a) action ~a args ~a~%"
-	  self (name self) action args)
-  (gen-mode-activate self action args))
+(defmethod parse-config ((m EmacsMode))
+	   (with-slots (data) m
+	     (format t "parse-config mode ~a data: ~a~%"
+		     (name m) data)
+	     (call-next-method)))
 
-(defmethod gen-mode-activate ((m EmacsMode) action args)
-	   (with-slots (data options) m
-	     (unless options 
-	       (setf options (normalize-feature-list data)))
-	     (format t "gen-mode-activate name ~a data ~a options ~a~%"
-		     (name m) data options)
-	     (with-output-to-string (output)
-				    (loop for f in options
-					  do (let* ((nf (car f))
-						    (sf (getf f nf)))
-					       (let ((feat (feat-get nf m)))
-						 (format t "get fure =~a~%" feat)
-						 (if feat
-						     (progn
-						       (gencode-action feat output action f))
-						   (format output ";;; feature ~a can not be found~%"
-							   nf))))))))
+(defmethod gencode ((m EmacsMode) output action)
+	   (call-next-method))
 
 (defclass EmacsGenericMode (EmacsMode)
   ())
 
-(defmethod gencode-action :before ((s EmacsGenericMode) output action args)
+(defmethod gencode :before ((s EmacsGenericMode) output action)
 	   (case action
 	     ((:CALL)
 	      (format output "(defun ~a ()~%"
 		      (mode-activate-fun s)))
 	     (otherwise "")))
 
-(defmethod gencode-action :after ((s EmacsGenericMode) output action args)
+(defmethod gencode :after ((s EmacsGenericMode) output action)
 	   (case action
 	     ((:CALL)
 	      (progn
@@ -75,33 +60,24 @@
 
 (defun make-emacs-mode (name owner data)
   (let ((c (read-from-string (symbol-name name))))
-    (if (find-class c nil)
-	(progn
-	  (make-instance c
-			 :name name
-			 :owner owner
-			 :scopes '(:modes)
-			 :entry #'emacs-mode-entry
-			 :data data))
+    (let ((mode-cls (if (find-class c nil)
+			c
+		      'EmacsGenericMode)))
       (progn
-	(format t "mode ~a fallback to generic mode~%"
-		name)
-	(make-instance 'EmacsGenericMode
+	(format t "mode ~a using class ~a~%"
+		name mode-cls)
+	(make-instance mode-cls
 		       :name name
 		       :owner owner
-		       :scopes '(:modes)
-		       :entry #'emacs-mode-entry
 		       :data data)))))
 
 (defclass EmacsExtMode (EmacsMode)
   ((description :initarg :description
 		:initform "none")
    (pkgs :initargs :pkgs
-	 :initform nil)
-   (suffixes :initargs :suffixes
-	     :initform nil)))
+	 :initform nil)))
 
-(defmethod gencode-action :before ((s EmacsExtMode) output action args)
+(defmethod gencode :before ((s EmacsExtMode) output action)
 	   (format t "gencode for ~a~%" (name s))
 	   (case action
 	     ((:INIT)
@@ -109,23 +85,19 @@
 		(format output "(progn~%")
 		(loop for pkg in pkgs
 		      do (format output "(pkginstall '~a)~%" pkg))
-		(loop for suffix in suffixes
-		      do (format output "(add-to-list 'auto-mode-alist '(\"\\\\~a\\\\'\" . ~a-mode))~%"
-				 (string-downcase (format nil "~a" suffix))
-				 (string-downcase (name s))))
 		(format output "t)~%")))
 	     (otherwise "")))
 
-(defmacro mode! (name descr pkgs1 suffixes1)
-  (format t "create mode for (~a ~a ~a)~%"
-	  name pkgs1 suffixes1)
+(defmacro mode! (name descr pkgs1 )
+  (format t "create mode for (~a ~a )~%"
+	  name pkgs1 )
   `(progn
      (defclass ,name (EmacsExtMode)
        ())
 
-     (defmethod initialize-instance :after ((m ,name) &key)
-		(with-slots (description pkgs suffixes) m
+     (defmethod parse-config ((m ,name) )
+		(with-slots (description pkgs ) m
 		  (setf description ,descr)
-		  (setf pkgs ',pkgs1)
-		  (setf suffixes ',suffixes1)))
+		  (setf pkgs ',pkgs1))
+		(call-next-method))
      t))

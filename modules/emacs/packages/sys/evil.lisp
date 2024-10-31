@@ -1,4 +1,4 @@
-(defun evil-entry (self action args)
+(defun evil-entry (self action)
   (case action
         ((:INIT)
          #/

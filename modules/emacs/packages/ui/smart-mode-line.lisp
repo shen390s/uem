@@ -1,4 +1,4 @@
-(defun smart-mode-line-entry (self action args)
+(defun smart-mode-line-entry (self action )
   (case action
     ((:INIT)
      #/

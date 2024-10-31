@@ -1,4 +1,4 @@
-(defun origami-call (self args)
+(defun origami-call (self )
   (let ((own (owner self)))
     (cond
       ((typep own 'EmacsGenericMode)
@@ -12,7 +12,7 @@
 	 (global-origami-mode 1))
        /#))))
 
-(defun origami-entry (self action args)
+(defun origami-entry (self action )
   (case action
     ((:INIT)
      #/
@@ -22,7 +22,7 @@
 		     :repo "gregsexton/origami.el")))
      /#)
     ((:CALL)
-     (origami-call self args))
+     (origami-call self ))
     (otherwise "")))
 
 (feat! origami

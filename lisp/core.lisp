@@ -13,19 +13,32 @@
      (defclass ,fname (UEMFeature)
        ())
 
-     (defmethod initialize-instance :after ((f ,fname) &key)
+     (defmethod parse-config ((f ,fname))
                 (with-slots (name description scopes entry) f
                   (setf name (symbol-name ',fname))
                   (setf description ,fdescription)
                   (setf scopes ',fscopes)
                   (setf entry #',fentry)))))
 
+(defun normalize-key-args (acc1 acc2 k args)
+  (if args
+      (let ((it1 (car args)))
+	(if k
+	    (if (keywordp it1)
+		(progn
+		  (setf (getf acc1 k) `',acc2)
+		  (normalize-key-args acc1 nil it1 (cdr args)))
+	      (normalize-key-args acc1 (append acc2 (list it1)) k (cdr args)))
+	  (if (keywordp it1)
+	      (normalize-key-args acc1 nil it1 (cdr args))
+	    (normalize-key-args acc1 nil nil (cdr args)))))
+    (progn
+      (when (keywordp k)
+	(setf (getf acc1 k) `',acc2))
+      acc1)))
+
 (defmacro sys! (name &rest args)
-  (let* ((xargs (mapcar #'(lambda (x)
-                            (if (keywordp x)
-                                x
-                              `(funcall #',x)))
-                        args)))
+  (let* ((xargs (normalize-key-args nil nil nil args)))
     (format t "sys! args: ~a~%" xargs)
     `(let ((sn (cond
                  ((eql ',name 'emacs) 'UEMEmacs)
@@ -34,13 +47,14 @@
          (setf *uem-sys* (make-instance sn
                                         ,@xargs)))))
 
-(defun feat-get (name owner)
+(defun feat-get (name owner data)
   (handler-case
       (progn
-        (format t "feat-get ~a ~a~%"
+        (format t "feat-get ~a owner ~a~%"
                 name owner)
         (make-instance name
                        :name (symbol-name name)
-                       :owner owner))
+                       :owner owner
+		       :data data))
     (SB-PCL:CLASS-NOT-FOUND-ERROR () nil)))
 
