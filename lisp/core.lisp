@@ -7,8 +7,8 @@
   "The root directory of load module")
 
 (defmacro feat! (fname fdescription fscopes fentry)
-  (format t "feat! name ~a scopes ~a entry ~a~%"
-          fname fdescription fscopes fentry)
+  (format t "feat! name: ~a scopes: ~a description: ~a entry: ~a~%"
+          fname fscopes fdescription fentry)
   `(progn
      (defclass ,fname (UEMFeature)
        ())
