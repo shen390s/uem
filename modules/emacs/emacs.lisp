@@ -7,8 +7,10 @@
 	  (setq custom-file (concat emacs-config-dir "/custom.el"))
 	  (setq custom-safe-themes t)
 	  ;;(setq tsc-dyn-get-from '(:compilation))
-	  (setenv "HTTPS_PROXY" "sock5://localhost:8118")
-	  (setenv "HTTP_PROXY" "socks5://localhost:8118"))
+	  (setenv "HTTPS_PROXY" "http://localhost:8118")
+	  (setenv "HTTP_PROXY" "http://localhost:8118")
+	  (setq c-eldoc-includes
+		"-I/usr/include -I/usr/local/include -I. -I.."))
       /#
       
       :core 
@@ -33,7 +35,7 @@
       (telephone-line)
 
       :modes
-      (c +eldoc +guess-c-style +call-graph +which-func)
+      (c +eldoc +guess-c-style +call-graph +which-func +tree-sitter)
       (go +eldoc +which-func)
       (emacs-lisp -parinfer -lsp)
       (lisp +eldoc -parinfer)

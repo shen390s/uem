@@ -27,10 +27,11 @@
 	       (format out "t)~%")))
 	   ""))
       ((:CALL)
-       #/
-       (progn
-	 (eldoc-mode 1))
-       /#)
+       (concatenate 'string
+		    "(progn"
+		    (case (read-from-string (format nil ":~a" (name own)))
+		      ((:C :CPP) "(c-turn-on-eldoc-mode))")
+		    (otherwise "t)"))))
       (otherwise ""))))
 
 (feat! eldoc
