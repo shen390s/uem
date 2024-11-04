@@ -3,9 +3,7 @@
     ((:INIT)
      #/
      (progn
-       (pkginstall '(call-graph :type git
-                     :host github
-                     :repo "emacsmirror/call-graph"))
+       (pkginstall 'call-graph)
        (require 'call-graph))
      /#)
     ((:CALL)
