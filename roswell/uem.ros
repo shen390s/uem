@@ -38,6 +38,12 @@ exec ros -Q -- $0 "$@"
   (list
    (clingon:make-option
     :string
+    :description "configuration file"
+    :short-name #\c
+    :long-name "config"
+    :key :config)
+   (clingon:make-option
+    :string
     :description "module path"
     :short-name #\m
     :long-name "modulepath"
@@ -61,10 +67,11 @@ exec ros -Q -- $0 "$@"
                         :usage ""
                         :options (uem/gen/options)
                         :handler #'(lambda (cmd)
-                                     (let ((module-path (clingon:getopt cmd :module-path))
+                                     (let ((config (clingon:getopt cmd :config))
+					   (module-path (clingon:getopt cmd :module-path))
                                            (verbose (clingon:getopt cmd :verbose))
                                            (output  (clingon:getopt cmd :output)))
-                                       (uem:gen module-path verbose output)))))
+                                       (uem:gen config module-path verbose output)))))
 (defun uem/command ()
   "uem toplevel command"
   (clingon:make-command :name "uem"
