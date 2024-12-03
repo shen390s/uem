@@ -9,6 +9,7 @@
 	  ;;(setq tsc-dyn-get-from '(:compilation))
 	  (setenv "HTTPS_PROXY" "http://localhost:8118")
 	  (setenv "HTTP_PROXY" "http://localhost:8118")
+	  (setq github_apikey "add your github api key here")
 	  (setq c-eldoc-includes
 		"-I/usr/include -I/usr/local/include -I. -I.."))
       /#
@@ -57,5 +58,6 @@
       (treemacs +evil +magit)
       (noccur )
       (emacs-quilt)
-      (magit ) 
+      (magit )
+      (gptel)
       (sly))
