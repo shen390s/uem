@@ -20,7 +20,9 @@
       :editor 
       (bind-mode ("poly-markdown-mode" ".md" ".markdown" ".mkd" ".mdown" ".mkdn" ".mdwn")
 		 ("poly-ascii-mode" ".adoc")
-		 ("simplex-mode" ".sex" ".simplex"))
+		 ("simplex-mode" ".sex" ".simplex")
+		 ("capnp-mode" ".capnp")
+		 ("elisp-mode" ".el" "Cask"))
       (undo-tree)
       (yasnippet )
       (evil-surround)
@@ -46,6 +48,7 @@
       (tex +eldoc +auctex +magic-latex)
       (fundamental +hlinum +ruler +smartparens) 
       (simplex)
+      (capnp)
       (prog  +hlinum +ruler +smartparens +rainbow-delimiters +rainbow-identifiers -flymake)
 
       :complete
