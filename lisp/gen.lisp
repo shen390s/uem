@@ -33,15 +33,17 @@
                              :type nil
                              :defaults module-config)))
     (setf *uem-module-root* module-path)
-    (let ((pkg-path (make-pathname :name "packages"
-                                   :type nil
-                                   :defaults module-path)))
-      (progn
-        (format t "Loading packages from ~a...~%" pkg-path)
-	(load-modules pkg-path)
-	(load module-config :verbose t :print t)
-        (let ((v *uem-sys*))
-          (with-open-file (out (ensure-directories-exist output) :direction :output
-								 :if-exists :supersede
-								 :if-does-not-exist :create)
-	    (gencode v out (name v))))))))
+    (handler-bind ((error (lambda (e)
+			    (sb-debug:backtrace))))
+      (let ((pkg-path (make-pathname :name "packages"
+                                     :type nil
+                                     :defaults module-path)))
+	(progn
+          (format t "Loading packages from ~a...~%" pkg-path)
+	  (load-modules pkg-path)
+	  (load module-config :verbose t :print t)
+          (let ((v *uem-sys*))
+            (with-open-file (out (ensure-directories-exist output) :direction :output
+				 :if-exists :supersede
+				 :if-does-not-exist :create)
+	      (gencode v out (name v)))))))))
