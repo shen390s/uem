@@ -41,6 +41,7 @@ exec ros -Q -- $0 "$@"
     :description "configuration file"
     :short-name #\c
     :long-name "config"
+    :required t
     :key :config)
    (clingon:make-option
     :string
