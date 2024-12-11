@@ -7,20 +7,22 @@
 	  (setq custom-file (concat emacs-config-dir "/custom.el"))
 	  (setq custom-safe-themes t)
 	  ;;(setq tsc-dyn-get-from '(:compilation))
-	  (setenv "HTTPS_PROXY" "http://localhost:8118")
-	  (setenv "HTTP_PROXY" "http://localhost:8118")
+	  ;;(setenv "HTTPS_PROXY" "http://localhost:8118")
+	  ;;(setenv "HTTP_PROXY" "http://localhost:8118")
+	  (setq proxies '("http://localhost:8118" "http://172.20.0.241:8118"))
 	  (setq github_apikey "add your github api key here")
 	  (setq c-eldoc-includes
 		"-I/usr/include -I/usr/local/include -I. -I.."))
       /#
       
       :core 
+      proxy  ;; put this before core that we can use proxy for straight installation
       straight
       
       :editor 
       (bind-mode ("poly-markdown-mode" ".md" ".markdown" ".mkd" ".mdown" ".mkdn" ".mdwn")
 		 ("poly-ascii-mode" ".adoc")
-		 ("simplex-mode" ".sex" ".simplex")
+		 ("simplex-mode" ".sex" ".simplex" ".sx")
 		 ("capnp-mode" ".capnp")
 		 ("elisp-mode" ".el" "Cask"))
       (undo-tree)
