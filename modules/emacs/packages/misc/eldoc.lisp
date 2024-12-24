@@ -31,7 +31,7 @@
 		    "(progn"
 		    (case (read-from-string (format nil ":~a" (name own)))
 		      ((:C :CPP) "(c-turn-on-eldoc-mode))")
-		    (otherwise "t)"))))
+		    (otherwise " t)"))))
       (otherwise ""))))
 
 (feat! eldoc

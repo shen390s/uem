@@ -25,12 +25,12 @@
 			"")
                       (format nil "(push \"~a/themes\" custom-theme-load-path)~%"
                               *uem-module-root*))))
-      ((:CALL) #/
+      ((:POST-CALL) #/
        (progn
-	 (when custom-file
-           (load custom-file t t))
 	 (when custom-themes
-           (load-themes custom-themes t)))
+           (load-themes custom-themes t))
+	 (when custom-file
+           (load custom-file t t)))
        /#
        ))))
 

@@ -16,8 +16,9 @@
 		   (setenv "HTTPS_PROXY" proxy))
 		 (setup_proxy (cdr proxies))))))
 
-       (when proxies
-	 (setup_proxy proxies)))
+       (when (boundp 'proxies)
+	 (when proxies
+	   (setup_proxy proxies))))
 /#
      )
     (otherwise "")))

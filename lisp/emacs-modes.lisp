@@ -52,7 +52,7 @@
 	   (case action
 	     ((:CALL)
 	      (progn
-		(format output "t)~%")
+		(format output " t)~%")
 		(format output "(add-hook '~a #'~a)~%"
 			(mode-hook-name s)
 			(mode-activate-fun s))))

@@ -24,11 +24,12 @@
 		 ("poly-ascii-mode" ".adoc")
 		 ("simplex-mode" ".sex" ".simplex" ".sx")
 		 ("capnp-mode" ".capnp")
-		 ("elisp-mode" ".el" "Cask"))
+		 ("emacs-lisp-mode" ".el" "Cask"))
       (undo-tree)
       (yasnippet )
       (evil-surround)
       (iedit )
+      (clang-format)
 
       :ui
       (evil)
@@ -40,7 +41,7 @@
       (telephone-line)
 
       :modes
-      (c +eldoc +guess-c-style +call-graph +which-func +tree-sitter)
+      (c +eldoc +xce-c-style +call-graph +which-func +tree-sitter)
       (go +eldoc +which-func)
       (emacs-lisp -parinfer -lsp)
       (lisp +eldoc -parinfer)
