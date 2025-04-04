@@ -3,6 +3,12 @@
         ((:INIT)
          #/
       (defvar bootstrap-version)
+      (defvar skip-pkginstall
+	(let ((skip (getenv "UEM_SKIP_PKGINSTALL")))
+	  (and skip
+	       (or (string-equal-ignore-case skip "Y")
+		   (string-equal-ignore-case skip "YES")))))
+      
       (let ((bootstrap-file
               (expand-file-name
                "straight/repos/straight.el/bootstrap.el"
@@ -19,9 +25,10 @@
         (load bootstrap-file nil 'nomessage))
         
         (defun pkginstall (pkg)
-           (progn
+           (unless skip-pkginstall
              (straight-use-package pkg)))   
-        (straight-pull-package "melpa")
+	(unless skip-pkginstall
+          (straight-pull-package "melpa"))
 /#
          )
         (otherwise "")))

@@ -3,7 +3,7 @@
 
 (custom-theme-set-faces
  'rshen
- '(default ((t (:inherit nil :stipple nil :background "#002451" :foreground "#ffffff" :inverse-video nil :box nil :strike-through nil :overline nil :underline nil :slant normal :weight normal :height 140 :width normal :foundry "nil" :family "Fira Code"))))
+ '(default ((t (:family "Inconsolata LGC" :foundry "PfEd" :slant normal :weight medium :height 113 :width normal))))
  '(cursor ((t (:background "#ff9da4"))))
  '(fixed-pitch ((t (:family "Monospace"))))
  '(variable-pitch ((((type w32)) (:foundry "outline" :family "Arial")) (t (:family "Sans Serif"))))

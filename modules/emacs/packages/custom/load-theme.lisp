@@ -27,8 +27,8 @@
                               *uem-module-root*))))
       ((:POST-CALL) #/
        (progn
-	 (when custom-themes
-           (load-themes custom-themes t))
+;;	 (when custom-themes
+;;           (load-themes custom-themes t))
 	 (when custom-file
            (load custom-file t t)))
        /#
