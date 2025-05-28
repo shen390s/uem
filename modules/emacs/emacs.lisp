@@ -3,7 +3,7 @@
       #/(progn
 	  (setq emacs-config-dir "~/.config/emacs/uem")
 	  (unless (file-exists-p emacs-config-dir)
-	    (make-directory emacs-config-dir))
+	    (make-directory emacs-config-dir t))
 	  (setq custom-file (concat emacs-config-dir "/custom.el"))
 	  (setq custom-safe-themes t)
 	  ;;(setq tsc-dyn-get-from '(:compilation))
@@ -24,7 +24,8 @@
 		 ("poly-ascii-mode" ".adoc")
 		 ("simplex-mode" ".sex" ".simplex" ".sx")
 		 ("capnp-mode" ".capnp")
-		 ("emacs-lisp-mode" ".el" "Cask"))
+		 ("emacs-lisp-mode" ".el" "Cask")
+		 ("nix-mode" ".nix"))
       (undo-tree)
       (yasnippet )
       (evil-surround)
@@ -53,6 +54,7 @@
       (simplex)
       (capnp)
       (prog  +hlinum +ruler +smartparens +rainbow-delimiters +rainbow-identifiers -flymake)
+      (nix)
 
       :complete
       vertico
