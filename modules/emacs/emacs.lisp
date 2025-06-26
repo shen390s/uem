@@ -25,6 +25,7 @@
 		 ("simplex-mode" ".sex" ".simplex" ".sx")
 		 ("capnp-mode" ".capnp")
 		 ("emacs-lisp-mode" ".el" "Cask")
+		 ("zig-mode" ".zig" ".zon")
 		 ("nix-mode" ".nix"))
       (undo-tree)
       (yasnippet )
@@ -55,6 +56,7 @@
       (capnp)
       (prog  +hlinum +ruler +smartparens +rainbow-delimiters +rainbow-identifiers -flymake)
       (nix)
+      (zig)
 
       :complete
       vertico
