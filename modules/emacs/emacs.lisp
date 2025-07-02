@@ -26,7 +26,8 @@
 		 ("capnp-mode" ".capnp")
 		 ("emacs-lisp-mode" ".el" "Cask")
 		 ("zig-mode" ".zig" ".zon")
-		 ("nix-mode" ".nix"))
+		 ("nix-mode" ".nix")
+		 ("poly-quarto-mode" ".qmd" ".Rmd"))
       (undo-tree)
       (yasnippet )
       (evil-surround)
@@ -57,6 +58,7 @@
       (prog  +hlinum +ruler +smartparens +rainbow-delimiters +rainbow-identifiers -flymake)
       (nix)
       (zig)
+      (quarto)
 
       :complete
       vertico
