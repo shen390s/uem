@@ -27,6 +27,7 @@
 		 ("emacs-lisp-mode" ".el" "Cask")
 		 ("zig-mode" ".zig" ".zon")
 		 ("nix-mode" ".nix")
+		 ("typst-ts-mode" ".typ")
 		 ("poly-quarto-mode" ".qmd" ".Rmd"))
       (undo-tree)
       (yasnippet )
@@ -59,6 +60,8 @@
       (nix)
       (zig)
       (quarto)
+      (typst-ts +typst-preview)
+      ;;(typst)
 
       :complete
       vertico

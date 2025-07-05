@@ -71,7 +71,7 @@
 		       :owner owner
 		       :data data)))))
 
-(defclass EmacsExtMode (EmacsMode)
+(defclass EmacsExtMode (EmacsGenericMode)
   ((description :initarg :description
 		:initform "none")
    (pkgs :initargs :pkgs
