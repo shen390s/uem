@@ -14,6 +14,12 @@
        (pkginstall '(tree-sitter-langs :type git
 				       :host github
 				       :repo "shen390s/tree-sitter-langs"))
+       (pkginstall '(tree-sitter-yaml :type git
+				      :host github
+				      :repo "tree-sitter-grammars/tree-sitter-yaml"))
+       (pkginstall '(tree-sitter-markdown :type git
+					  :host github
+					  :repo "tree-sitter-grammars/tree-sitter-markdown"))
        (pkginstall 'el-patch)
        ;;(require 'tree-sitter-indent)
        (require 'ts-fold)
