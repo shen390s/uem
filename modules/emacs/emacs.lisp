@@ -32,6 +32,7 @@
 		 ("typst-ts-mode" ".typ")
 		 ("yaml-ts-mode" ".yml" ".yaml")
 		 ("poly-quarto-mode" ".qmd" ".Rmd")
+		 ("meson-mode" "meson.build")
          ("lua-mode" ".lua"))
       (undo-tree)
       (yasnippet )
@@ -68,6 +69,7 @@
       (quarto +virtual-auto-fill +hlinum)
       (typst-ts +typst-preview +virtual-auto-fill +hlinum)
       (yaml-ts +yaml-pro +hlinum)
+      (meson +hlinum +ruler +smartparens +rainbow-delimiters)
       ;;(typst)
 
       :complete
