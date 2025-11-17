@@ -6,12 +6,12 @@ exec ros -Q -- $0 "$@"
 (progn ;;init forms
   (ros:ensure-asdf)
   #+quicklisp(ql:quickload '(:uiop :clingon :cl-fad :uem) :silent nil))
-  
+
 
 (asdf:load-system :uem)
 
 (defpackage :ros.script.uem.3883002840
-  (:use :cl))
+            (:use :cl))
 (in-package :ros.script.uem.3883002840)
 
 (defun uem/handler (cmd)
@@ -69,10 +69,28 @@ exec ros -Q -- $0 "$@"
                         :options (uem/gen/options)
                         :handler #'(lambda (cmd)
                                      (let ((config (clingon:getopt cmd :config))
-					   (module-path (clingon:getopt cmd :module-path))
+					                       (module-path (clingon:getopt cmd :module-path))
                                            (verbose (clingon:getopt cmd :verbose))
                                            (output  (clingon:getopt cmd :output)))
                                        (uem:gen config module-path verbose output)))))
+
+(defun uem/initconf/options ()
+  (list (clingon:make-option
+         :string
+         :description "module path"
+         :short-name #\m
+         :long-name "modulepath"
+         :key :module-path)))
+
+(defun  uem/initconf ()
+  (clingon:make-command :name "initconf"
+                        :description "create initial configuration with template"
+                        :usage ""
+                        :options (uem/initconf/options)
+                        :handler #'(lambda (cmd)
+                                     (let ((module-path (clingon:getopt cmd :module-path)))
+                                       (uem:init-conf module-path)))))
+
 (defun uem/command ()
   "uem toplevel command"
   (clingon:make-command :name "uem"
@@ -81,9 +99,10 @@ exec ros -Q -- $0 "$@"
                         :handler #'uem/handler
                         :options (uem/options)
                         :sub-commands (list (uem/version)
-                                            (uem/gen))))
+                                            (uem/gen)
+                                            (uem/initconf))))
 
-                                            
+
 (defun main (&rest argv)
   (declare (ignorable argv))
   "The main entrypoint of uem"

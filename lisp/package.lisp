@@ -6,4 +6,5 @@
    :run-program-ex
    :sys!
    :feat!
+   :init-conf
    :gen))

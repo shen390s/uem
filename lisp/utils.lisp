@@ -73,3 +73,26 @@
 
 (defun mk-keyword (k)
   (read-from-string (format nil ":~a" k)))
+
+(defun get-executable-path ()
+  (uiop/filesystem:truename*
+   #+sbcl
+   (car sb-ext:*posix-argv*)
+   #+ccl
+   (ccl:argv 0)
+   #+clisp
+   (car ext:*args*)
+   #+ecl
+   (car (si:command-args))
+   #-(or sbcl ccl clisp ecl)
+   (error "Current lisp  implementation not supported by GET-EXECUTABLE_PATH")))
+
+(defun get-directory-part (file-path)
+  (let ((full-path (pathname file-path)))
+    (let* ((pn (uiop:ensure-directory-pathname full-path))
+           (dir-list (pathname-directory pn))
+           (parent-list (butlast dir-list)))
+      (make-pathname :directory parent-list
+                     :defaults pn
+                     :name nil
+                     :type nil))))

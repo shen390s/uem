@@ -33,7 +33,9 @@
 		 ("yaml-ts-mode" ".yml" ".yaml")
 		 ("poly-quarto-mode" ".qmd" ".Rmd")
 		 ("meson-mode" "meson.build")
-         ("lua-mode" ".lua"))
+         ("lua-mode" ".lua")
+         ("tlaplus-mode" ".tla" ".tla+")
+         ("cmake-mode" "CMakeLists.txt" ".cmake"))
       (undo-tree)
       (yasnippet )
       (evil-surround)
@@ -70,6 +72,8 @@
       (typst-ts +typst-preview +virtual-auto-fill +hlinum)
       (yaml-ts +yaml-pro +hlinum)
       (meson +hlinum +ruler +smartparens +rainbow-delimiters)
+      (cmake +hlinum +ruler +smartparens +rainbow-delimiters)
+      (tlaplus +hlinum +ruler +smartparens +rainbow-delimiters)
       ;;(typst)
 
       :complete

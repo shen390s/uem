@@ -21,6 +21,7 @@
                  (:file "core-shell")
                  (:file "core")
                  (:file "gen")
+		 (:file "initconf")
                  (:file "emacs-modes")
                  (:file "utils"))))
   :description "A tool for universal environ configuration"
