@@ -23,7 +23,7 @@
                           (format nil "(setq custom-themes '(~a))~%"
                                   themes)
 			"")
-                      (format nil "(push \"~a/themes\" custom-theme-load-path)~%"
+                      (format nil "(push \"~a/emacs/themes\" custom-theme-load-path)~%"
                               *uem-module-root*))))
       ((:POST-CALL) #/
        (progn
