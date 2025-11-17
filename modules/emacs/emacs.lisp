@@ -15,6 +15,7 @@
 	  (setq github_apikey "add your github api key here")
 	  (setq c-eldoc-includes
 		"-I/usr/include -I/usr/local/include -I. -I.."))
+      (setq straight-vc-git-default-protocol 'ssh)
       /#
       
       :core 
