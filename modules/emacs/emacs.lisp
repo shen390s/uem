@@ -15,6 +15,7 @@
 	  (setq github_apikey "add your github api key here")
 	  (setq c-eldoc-includes
 		"-I/usr/include -I/usr/local/include -I. -I..")
+      (setq cursory-default-preset 'underscore-thick)
       (setq straight-vc-git-default-protocol 'ssh))
       /#
       
@@ -43,6 +44,8 @@
       (iedit )
       (clang-format)
       (unfill)
+      (beacon)
+      (cursory)
 
       :ui
       (evil)
