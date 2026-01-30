@@ -4,4 +4,7 @@
    :uem-version
    :show-version
    :run-program-ex
-   :uem/addons))
+   :sys!
+   :feat!
+   :init-conf
+   :gen))

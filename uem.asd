@@ -14,12 +14,16 @@
                 ((:file "package")
                  (:file "version")
                  (:file "const")
-                 (:file "utils")))
-               (:module "addon"
-                :serial t
-                :components
-                ((:file "emacs")
-                 (:file "fish"))))
+                 (:file "core-feat")
+                 (:file "core-scope")
+                 (:file "core-sys")
+                 (:file "core-emacs")
+                 (:file "core-shell")
+                 (:file "core")
+                 (:file "gen")
+		 (:file "initconf")
+                 (:file "emacs-modes")
+                 (:file "utils"))))
   :description "A tool for universal environ configuration"
   :long-description
   #.(uiop:read-file-string

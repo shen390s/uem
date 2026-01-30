@@ -5,13 +5,13 @@ exec ros -Q -- $0 "$@"
 |#
 (progn ;;init forms
   (ros:ensure-asdf)
-  #+quicklisp(ql:quickload '(:uiop :clingon :uem) :silent nil))
-  
+  #+quicklisp(ql:quickload '(:uiop :clingon :cl-fad :uem) :silent nil))
+
 
 (asdf:load-system :uem)
 
 (defpackage :ros.script.uem.3883002840
-  (:use :cl))
+            (:use :cl))
 (in-package :ros.script.uem.3883002840)
 
 (defun uem/handler (cmd)
@@ -28,11 +28,68 @@ exec ros -Q -- $0 "$@"
 (defun uem/version ()
   (clingon:make-command :name "version"
                         :description "show the version of uem"
-                        :usage "version"
+                        :usage ""
                         :options nil
                         :handler #'(lambda (cmd)
                                      (declare (ignorable cmd))
                                      (uem:show-version))))
+
+(defun uem/gen/options ()
+  (list
+   (clingon:make-option
+    :string
+    :description "configuration file"
+    :short-name #\c
+    :long-name "config"
+    :required t
+    :key :config)
+   (clingon:make-option
+    :string
+    :description "module path"
+    :short-name #\m
+    :long-name "modulepath"
+    :key :module-path)
+   (clingon:make-option
+    :string
+    :description "output"
+    :short-name #\o
+    :long-name "output"
+    :key :output)
+   (clingon:make-option
+    :counter
+    :description "verbose"
+    :short-name #\v
+    :long-name "verbose"
+    :key :verbose)))
+
+(defun uem/gen ()
+  (clingon:make-command :name "gen"
+                        :description "generate configuration"
+                        :usage ""
+                        :options (uem/gen/options)
+                        :handler #'(lambda (cmd)
+                                     (let ((config (clingon:getopt cmd :config))
+					                       (module-path (clingon:getopt cmd :module-path))
+                                           (verbose (clingon:getopt cmd :verbose))
+                                           (output  (clingon:getopt cmd :output)))
+                                       (uem:gen config module-path verbose output)))))
+
+(defun uem/initconf/options ()
+  (list (clingon:make-option
+         :string
+         :description "module path"
+         :short-name #\m
+         :long-name "modulepath"
+         :key :module-path)))
+
+(defun  uem/initconf ()
+  (clingon:make-command :name "initconf"
+                        :description "create initial configuration with template"
+                        :usage ""
+                        :options (uem/initconf/options)
+                        :handler #'(lambda (cmd)
+                                     (let ((module-path (clingon:getopt cmd :module-path)))
+                                       (uem:init-conf module-path)))))
 
 (defun uem/command ()
   "uem toplevel command"
@@ -41,12 +98,11 @@ exec ros -Q -- $0 "$@"
                         :version uem:uem-version
                         :handler #'uem/handler
                         :options (uem/options)
-                        :sub-commands (append (mapcar #'(lambda (fn)
-                                                          (funcall fn))
-                                                      (uem:uem/addons))
-                                              (list (uem/version)))))
+                        :sub-commands (list (uem/version)
+                                            (uem/gen)
+                                            (uem/initconf))))
 
-                                            
+
 (defun main (&rest argv)
   (declare (ignorable argv))
   "The main entrypoint of uem"
