@@ -37,6 +37,7 @@
 		 ("meson-mode" "meson.build")
          ("lua-mode" ".lua")
          ("tlaplus-mode" ".tla" ".tla+")
+         ("peg-mode" ".peg" ".leg")
          ("cmake-mode" "CMakeLists.txt" ".cmake"))
       (undo-tree)
       (yasnippet )
@@ -78,6 +79,7 @@
       (meson +hlinum +ruler +smartparens +rainbow-delimiters)
       (cmake +hlinum +ruler +smartparens +rainbow-delimiters)
       (tlaplus +hlinum +ruler +smartparens +rainbow-delimiters)
+      (peg)
       ;;(typst)
 
       :complete
@@ -92,4 +94,5 @@
       (emacs-quilt)
       (magit )
       (gptel)
+      (claude-code)
       (sly))
