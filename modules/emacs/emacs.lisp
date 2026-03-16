@@ -94,4 +94,5 @@
       (emacs-quilt)
       (magit )
       (gptel)
+      (claude-code)
       (sly))

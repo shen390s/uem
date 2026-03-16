@@ -2,7 +2,7 @@
   (case action
     ((:CALL) #/(progn
                  (server-start))
-/#
+     /#
      )
     (otherwise "")))
 
@@ -10,5 +10,3 @@
        "emacs editor server"
        (:app)
        emacs-server-entry)
-
-
