@@ -1,6 +1,328 @@
-= UEM -- A tool for Universal Environment Management
+= UEM -- Universal Environment Management
+
+A Common Lisp tool that generates Emacs configuration from a declarative specification.
+Instead of maintaining a large init.el by hand, you describe your setup using a DSL
+and UEM generates the corresponding Emacs Lisp code through a multi-phase pipeline.
+
+== Overview
+
+UEM takes a system definition (written in its DSL) and produces a complete Emacs
+configuration file. The architecture has three layers:
+
+. **Core** -- Class hierarchy and code generation pipeline (`lisp/`)
+. **Modules** -- Feature and mode definitions for Emacs (`modules/emacs/`)
+. **Runtime** -- Emacs Lisp bootstrap for profile handling (`data/emacs/`)
 
 == Installation
 
-== Configuration
+=== Prerequisites
 
+- SBCL (Steel Bank Common Lisp)
+- Quicklisp
+- Emacs
+
+=== Build
+
+[source,bash]
+----
+# Clone the repo
+git clone git@github.com:shen390s/uem.git
+cd uem
+
+# Build executable (adjust if using Roswell or Make)
+sbcl --load uem.asd --eval '(asdf:make :uem)'
+----
+
+== Usage
+
+=== Generate Emacs Configuration
+
+[source,bash]
+----
+uem gen -c <config-file> -m <module-path> -o <output-file>
+----
+
+Options:
+
+[cols="1,4"]
+|===
+| `-c` / `--config` | Path to the system definition file (e.g., `modules/emacs/emacs.lisp`)
+| `-m` / `--module-path` | Root directory of modules (defaults to `<executable-dir>/../modules`)
+| `-o` / `--output` | Output file path for generated Emacs Lisp
+| `-v` / `--verbose` | Enable verbose output (currently accepted but not yet wired)
+|===
+
+=== Initialize a Configuration Template
+
+[source,bash]
+----
+uem init -m <module-path>
+----
+
+Copies a starter `emacs.lisp` config into the current directory.
+
+== DSL Reference
+
+=== `sys!` -- Define a System
+
+Defines the top-level system configuration. Currently supports `emacs` and `fish`
+(shell support is incomplete).
+
+[source,lisp]
+----
+(sys! emacs
+      :init #/(progn
+                 (setq some-var t))
+      /#
+      :core
+      straight        ;; simple feature
+      proxy
+      :editor
+      (bind-mode ("emacs-lisp-mode" ".el" "Cask"))
+      (undo-tree)
+      :ui
+      (evil)
+      (smart-mode-line)
+      :modes
+      (c +eldoc +call-graph)
+      (emacs-lisp -parinfer)
+      :complete
+      vertico
+      :app
+      (magit)
+      (sly))
+----
+
+The keyword arguments correspond to scopes, which determine generation order.
+For Emacs, the order is: `:init` -> `:core` -> `:editor` -> `:ui` ->
+`:complete` -> `:modes` -> `:app`.
+
+=== `feat!` -- Define a Feature
+
+Registers a feature that can be referenced in the system definition.
+
+[source,lisp]
+----
+(defun my-feature-entry (self action)
+  (case action
+    ((:INIT) #/(progn
+                 (pkginstall 'my-package))
+    /#)
+    ((:CALL) #/(progn
+                 (require 'my-package)
+                 (my-package-setup))
+    /#)
+    (otherwise "")))
+
+(feat! my-feature
+       "Description of the feature"
+       (:app)           ;; scopes where this feature can appear
+       my-feature-entry) ;; entry point function
+----
+
+The entry function receives `self` (the feature instance) and `action`
+(one of the generation phases). It returns a string of Emacs Lisp code
+or `""` for phases it doesn't handle.
+
+=== `mode!` -- Define a Mode
+
+A shorthand for defining Emacs major modes with associated packages.
+
+[source,lisp]
+----
+(mode! nix
+       "Emacs mode for editing Nix files"
+       ("(nix-mode :type git
+                       :host github
+                       :repo \"NixOS/nix-mode\")"))
+----
+
+Modes can be extended with sub-features using `+` (activate) and `-`
+(deactivate) prefixes in the system definition:
+
+[source,lisp]
+----
+:modes
+(c +eldoc +call-graph +tree-sitter)    ;; enable eldoc, call-graph, tree-sitter for c-mode
+(emacs-lisp -parinfer)                  ;; disable parinfer for emacs-lisp-mode
+----
+
+=== `#/.../#` -- Embedded Code Reader Macro
+
+A custom reader macro that captures everything between `#/` and `/#` as a
+literal string. This lets you embed Emacs Lisp code containing double quotes
+or unbalanced parentheses without escaping.
+
+[source,lisp]
+----
+#/  (setq my-var "hello world")  /#
+----
+
+NOTE: This reader macro is scoped to the readtable used during `gen`. It is
+activated by `set-dispatch-macro-character` within a `let ((*readtable* ...))`
+binding, so it does not affect the global readtable.
+
+== Code Generation Pipeline
+
+UEM generates output through a 7-phase pipeline. Each feature and scope can
+produce code for any phase. Phases execute in this order:
+
+[cols="1,4"]
+|===
+| `:init` | Package installation and early setup
+| `:pre-config` | Pre-configuration hooks
+| `:config` | Main configuration
+| `:post-config` | Post-configuration hooks
+| `:pre-call` | Pre-activation hooks
+| `:call` | Feature activation (require, mode enable, key bindings)
+| `:post-call` | Post-activation hooks
+|===
+
+Within each phase, scopes generate code in the order defined by `cmp-child`
+(for Emacs: init -> core -> editor -> ui -> complete -> modes -> app).
+
+== Profile System
+
+The Emacs runtime (`data/emacs/startup/uem.el`) supports multiple profiles.
+Profiles are loaded based on the `--profile` command-line argument.
+
+=== Profile File Format
+
+Profiles are stored in `~/.config/uem/emacs/profiles/<name>` as Emacs Lisp
+property lists:
+
+[source,lisp]
+----
+(:name "work"
+ :directory "~/.config/emacs/work"
+ :environ (("GOPATH" . "~/go/work"))
+ :server-name "work-emacs")
+----
+
+=== Profile Properties
+
+[cols="1,4"]
+|===
+| `:name` | Profile identifier
+| `:directory` | Emacs user directory (overrides `user-emacs-directory`)
+| `:config-directory` | Config directory (defaults to `:directory`)
+| `:setup-fn` | Custom setup function (overrides default behavior)
+| `:load` | Additional Emacs Lisp file to load
+| `:environ` | Association list of environment variables to set
+| `:server-name` | Name for the Emacs server
+|===
+
+=== Startup Flow
+
+. `early-init.el` / `init.el` load `uem.el`
+. `uem.el` parses `--profile` from command-line args
+. The profile is read and applied (`uem-apply-profile`)
+. The generated config file is loaded via `uem-load-user-init`
+
+== Project Structure
+
+[source]
+----
+uem/
+  lisp/              # Core Common Lisp code
+    package.lisp     # Package definition
+    version.lisp     # Version string
+    const.lisp       # Constants (uem-base, uem-version)
+    core-sys.lisp    # Base class hierarchy (UEMObject, UEMContainerObject, UEMSystem)
+    core-feat.lisp   # Feature class (UEMFeature) and feat! macro
+    core-scope.lisp  # Scope classes (UEMScope, UEMFeatureScope)
+    core-emacs.lisp  # Emacs-specific scopes and UEMEmacs system
+    core-shell.lisp  # Shell system stubs (UEMShell, UEMFish)
+    core-shell.lisp  # Shell support
+    core.lisp        # sys! macro, feat-get, normalize-key-args
+    gen.lisp         # Code generation entry point (gen function)
+    initconf.lisp    # Configuration initialization
+    emacs-modes.lisp # Mode classes (EmacsMode, EmacsExtMode) and mode! macro
+    utils.lisp       # Utilities, #/.../# reader macro
+  modules/emacs/     # Feature and mode definitions
+    emacs.lisp       # System definition (the main config)
+    packages/
+      sys/           # System-level features (straight, evil, proxy, ...)
+      editor/        # Editor features (undo-tree, iedit, origami, ...)
+      ui/            # UI features (evil, smart-mode-line, telephone-line, ...)
+      completion/    # Completion frameworks (vertico)
+      modes/         # Major mode definitions (nix, zig, capnp, ...)
+      app/           # Application features (magit, sly, gptel, claude-code, ...)
+      misc/          # Miscellaneous (eldoc, auctex, clang-format, ...)
+      custom/        # User customizations (load-theme)
+    themes/          # Custom Emacs themes
+  data/emacs/        # Runtime Emacs Lisp
+    startup/         # Bootstrap files (early-init.el, init.el, uem.el)
+    scripts/         # Helper scripts
+    profiles/        # Default profile template
+  uem.asd            # Main system definition
+  uem-data.asd       # Data files system definition
+  uem-test.asd       # Test system definition (currently empty)
+----
+
+== Adding a New Feature
+
+Create a new `.lisp` file in the appropriate `modules/emacs/packages/` subdirectory:
+
+[source,lisp]
+----
+;; modules/emacs/packages/app/my-feature.lisp
+
+(defun my-feature-entry (self action)
+  (case action
+    ((:INIT) #/(progn
+                 (pkginstall 'my-package))
+    /#)
+    ((:CALL) #/(progn
+                 (require 'my-package)
+                 (my-package-setup))
+    /#)
+    (otherwise "")))
+
+(feat! my-feature
+       "Short description"
+       (:app)               ;; which scopes this feature belongs to
+       my-feature-entry)
+----
+
+Then reference it in `modules/emacs/emacs.lisp` under the matching scope:
+
+[source,lisp]
+----
+:app
+(my-feature)
+----
+
+== Adding a New Mode
+
+Create a `.lisp` file in `modules/emacs/packages/modes/`:
+
+[source,lisp]
+----
+;; modules/emacs/packages/modes/my-lang.lisp
+
+(mode! my-lang
+       "Emacs mode for MyLang"
+       ("(my-lang-mode :type git
+                           :host github
+                           :repo \"user/my-lang-mode\")"))
+----
+
+Then add it to the `:editor` scope's `bind-mode` list and the `:modes` scope
+in `modules/emacs/emacs.lisp`.
+
+== Known Limitations
+
+- **Shell support is incomplete** -- `UEMShell` and `UEMFish` are defined but
+  have no code generation logic.
+- **Global state** -- `*uem-sys*` is a global variable, so only one system can
+  be generated per session.
+- **Verbose flag is not wired** -- The `-v` flag is accepted but debug output
+  is always printed.
+- **SBCL-specific** -- The package uses `sb-ext` and catches
+  `SB-PCL:CLASS-NOT-FOUND-ERROR`, limiting portability.
+- **No tests** -- The test system (`uem-test.asd`) has no test files.
+
+== License
+
+BSD

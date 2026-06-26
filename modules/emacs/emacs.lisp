@@ -36,7 +36,7 @@
 		 ("poly-quarto-mode" ".qmd" ".Rmd")
 		 ("meson-mode" "meson.build")
          ("lua-mode" ".lua")
-         ("tlaplus-mode" ".tla" ".tla+")
+         ("tlaplus-ts-mode" ".tla" ".tla+")
          ("peg-mode" ".peg" ".leg")
          ("cmake-mode" "CMakeLists.txt" ".cmake"))
       (undo-tree)
@@ -78,7 +78,7 @@
       (yaml-ts +yaml-pro +hlinum)
       (meson +hlinum +ruler +smartparens +rainbow-delimiters)
       (cmake +hlinum +ruler +smartparens +rainbow-delimiters)
-      (tlaplus +hlinum +ruler +smartparens +rainbow-delimiters)
+      (tlaplus-ts +hlinum +ruler +smartparens +rainbow-delimiters)
       (peg)
       ;;(typst)
 
