@@ -2,6 +2,8 @@
       :init 
       #/(progn
 	  (setq emacs-config-dir "~/.config/emacs/uem")
+      (add-to-list 'treesit-language-source-alist
+                 '(tlaplus "https://github.com/tlaplus-community/tree-sitter-tlaplus"))
 	  (unless (file-exists-p emacs-config-dir)
 	    (make-directory emacs-config-dir t))
 	  (setq custom-file (concat emacs-config-dir "/custom.el"))
