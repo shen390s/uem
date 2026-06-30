@@ -2,6 +2,7 @@
       :init 
       #/(progn
 	  (setq emacs-config-dir "~/.config/emacs/uem")
+	  (require 'treesit)
       (add-to-list 'treesit-language-source-alist
                  '(tlaplus "https://github.com/tlaplus-community/tree-sitter-tlaplus"))
 	  (unless (file-exists-p emacs-config-dir)
@@ -10,9 +11,6 @@
 	  (setq custom-safe-themes t)
 	  (setq-default indent-tabs-mode nil)
 	  (setq-default tab-width 4)
-	  ;;(setq tsc-dyn-get-from '(:compilation))
-	  ;;(setenv "HTTPS_PROXY" "http://localhost:8118")
-	  ;;(setenv "HTTP_PROXY" "http://localhost:8118")
 	  (setq proxies (getenv "UEM_PROXYIES"))
 	  (setq github_apikey "add your github api key here")
 	  (setq c-eldoc-includes
@@ -96,5 +94,6 @@
       (emacs-quilt)
       (magit )
       (gptel)
-      (claude-code)
+      ;;(claude-code)
+      (ai-code-interface)
       (sly))
