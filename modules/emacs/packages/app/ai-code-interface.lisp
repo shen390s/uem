@@ -12,6 +12,9 @@
      /#
      )
     ((:CALL) #/(progn
+                 (require 'ghostel)
+                 (require 'ai-code-backends-infra-ghostel)
+                 (require 'ai-code-claude-code)
                  (defvar claude-auto-resume-delay 60
                    "Seconds to wait before auto-resuming after usage limit exceeded.")
 
@@ -40,18 +43,19 @@
                  (defvar claude-auto-resume--last-check-pos nil
                    "Last buffer position checked for usage limit pattern.")
 
-                 (defun claude-auto-resume--do-resume (buffer)
-                   "Send continue to claude session in BUFFER to resume work."
+                 (defun claude-auto-resume--do-resume (buf)
+                   "Send continue to claude session in BUF to resume work."
                    (setq claude-auto-resume--timer nil)
-                   (when (buffer-live-p buffer)
+                   (when (buffer-live-p buf)
                      (message "Auto-resuming claude session...")
-                     (with-current-buffer buffer
+                     (with-current-buffer buf
                        (ai-code-backends-infra--terminal-send-string "continue")
-                       (run-at-time 0.5 nil
-                                    (lambda ()
-                                      (when (buffer-live-p buffer)
-                                        (with-current-buffer buffer
-                                          (ai-code-backends-infra--terminal-send-return))))))))
+                       (let ((b buf))
+                         (run-at-time 0.5 nil
+                                      `(lambda ()
+                                         (when (buffer-live-p ,b)
+                                           (with-current-buffer ,b
+                                             (ai-code-backends-infra--terminal-send-return)))))))))
 
                  (defun claude-auto-resume--match-limit-p (start end)
                    "Return non-nil if any limit pattern matches between START and END."
@@ -90,14 +94,18 @@
                  (defun claude ()
                    "Run claude with subscription or 3rd-party backend."
                    (interactive)
-                   (if (y-or-n-p "Use Claude subscription? ")
-                       (let ((process-environment
-                              (seq-remove (lambda (e)
-                                            (string-prefix-p "ANTHROPIC_" e))
-                                          process-environment))
-                             (ai-code-backend 'claude-code))
-                         (ai-code-claude-code))
-                     (let ((ai-code-backend 'claude-code))
+                   (let ((ai-code-backend 'claude-code)
+                         (ai-code-claude-code-program-switches
+                          (if (y-or-n-p "Enable --dangerously-skip-permissions? ")
+                              (append ai-code-claude-code-program-switches
+                                      '("--dangerously-skip-permissions"))
+                            ai-code-claude-code-program-switches)))
+                     (if (y-or-n-p "Use Claude subscription? ")
+                         (let ((process-environment
+                                (seq-remove (lambda (e)
+                                              (string-prefix-p "ANTHROPIC_" e))
+                                            process-environment)))
+                           (ai-code-claude-code))
                        (ai-code-claude-code)))))
      /#
      )
