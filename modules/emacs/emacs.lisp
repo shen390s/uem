@@ -1,10 +1,34 @@
 (sys! emacs
       :init 
       #/(progn
+          (defun get-chinese-font-size ()
+            (let ((width (display-pixel-width)))
+              (if (>= width 3840)
+                  20
+                16)))
+
+          (defun my/set-fonts ()
+            (dolist (charset '(kana han cjk-misc bopomofo))
+              (set-fontset-font t charset (font-spec :family "LXGW WenKai Mono" :size (get-chinese-font-size)))))
+
+          (add-hook 'after-make-frame-functions
+                    (lambda (frame)
+                      (with-selected-frame frame
+                        (when (display-graphic-p)
+                          (my/set-fonts)))))
+          (add-hook 'after-init-hook
+                    (lambda ()
+                      (when (display-graphic-p)
+                        (my/set-fonts))))
+          
 	      (setq emacs-config-dir "~/.config/emacs/uem")
+          (setenv "ANTHROPIC_BASE_URL" "http://omniroute.#.(get-hostname).overlay:20128")
+          (setenv "ANTHROPIC_AUTH_TOKEN" "sk-b068da137c424285-4056f0-962bdecb")
           (with-eval-after-load 'treesit
             (add-to-list 'treesit-language-source-alist
                          '(tlaplus "https://github.com/tlaplus-community/tree-sitter-tlaplus"))
+            (add-to-list 'treesit-language-source-alist
+                         '(peg "https://github.com/shen390s/tree-sitter-peg"))
             (add-to-list 'treesit-extra-load-path
                          (expand-file-name "straight/build/tree-sitter-langs/bin" user-emacs-directory))
             (setq treesit-load-name-override-list
@@ -48,7 +72,7 @@
 		         ("meson-mode" "meson.build")
                  ("lua-mode" ".lua")
                  ("tlaplus-ts-mode" ".tla" ".tla+")
-                 ("peg-mode" ".peg" ".leg")
+                 ("peg-ts-mode" ".peg" ".leg")
                  ("cmake-mode" "CMakeLists.txt" ".cmake"))
       (undo-tree)
       (yasnippet )
@@ -90,7 +114,7 @@
       (meson +hlinum +ruler +smartparens +rainbow-delimiters)
       (cmake +hlinum +ruler +smartparens +rainbow-delimiters)
       (tlaplus-ts +hlinum +ruler +smartparens +rainbow-delimiters)
-      (peg)
+      (peg-ts)
       ;;(typst)
 
       :complete

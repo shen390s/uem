@@ -150,13 +150,43 @@ Modes can be extended with sub-features using `+` (activate) and `-`
 === `#/.../#` -- Embedded Code Reader Macro
 
 A custom reader macro that captures everything between `#/` and `/#` as a
-literal string. This lets you embed Emacs Lisp code containing double quotes
+string. This lets you embed Emacs Lisp code containing double quotes
 or unbalanced parentheses without escaping.
 
 [source,lisp]
 ----
 #/  (setq my-var "hello world")  /#
 ----
+
+==== Variable and Expression Expansion with `#.`
+
+Inside a `#/.../#` block, you can use `#.` to expand Common Lisp variables
+and expressions at runtime. This follows the CL `#.` (read-time eval)
+convention:
+
+[source,lisp]
+----
+;; Expand a variable:
+#/(push "#.*uem-module-root*/themes" load-path)/#
+
+;; Expand a function call:
+#/(setenv "URL" "http://#.(get-hostname).overlay:20128")/#
+
+;; Expand an expression with arguments:
+#/(push "#.(namestring *uem-module-root*)/themes" load-path)/#
+----
+
+Rules:
+
+- `#.symbol` -- expands the value of a CL variable
+- `#.(expr)` -- evaluates a CL expression and inserts the result as a string
+- When no `#.` is present, the block returns a plain string (fully backward-compatible)
+- When `#.` is present, the block returns a `(concatenate 'string ...)` form
+- Bare symbol reading terminates at whitespace, `/`, `"`, `'`, `(`, `)`, `,`, `;`, or `#`
+- The `/#` end delimiter is correctly distinguished from `/#.` (which is `/` literal + `#.` expansion)
+
+NOTE: `#.` does not conflict with Emacs Lisp syntax -- Elisp does not use `#.`
+as a read syntax. Common Elisp constructs like `#'function` pass through unchanged.
 
 NOTE: This reader macro is scoped to the readtable used during `gen`. It is
 activated by `set-dispatch-macro-character` within a `let ((*readtable* ...))`

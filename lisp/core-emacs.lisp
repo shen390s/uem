@@ -12,7 +12,9 @@
     ((:INIT)
      (with-slots (data) s
        (loop for it in data
-	     do (format output "~a~%" it))
+	     do (format output "~a~%" (if (stringp it)
+                                          it
+                                          (eval it))))
        (format output "(setq *module-root-path* \"~a\")~%"
                *uem-module-root*)))
     (otherwise "")))

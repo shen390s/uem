@@ -55,16 +55,74 @@
     v))
 
 ;; here reader for #/ .... /#
+;; Supports #.expr expansion inside the here-doc:
+;;   #.*variable*  - expands a variable value
+;;   #.(expr)      - expands a function call or expression
+;; When no #. is present, returns a plain string (backward-compatible).
+;; When #. is present, returns a (concatenate 'string ...) form.
+
+(defun symbol-terminator-p (ch)
+  "Return T if CH would terminate a symbol in here-doc context."
+  (member ch '(#\Space #\Tab #\Newline #\Return
+               #\/ #\" #\' #\( #\) #\, #\; #\#)))
+
+(defun read-heredoc-expr (stream)
+  "Read an expression after #. in a here-doc.
+   If starts with (, use CL reader for the full form.
+   Otherwise, read a symbol name until a terminator."
+  (let ((next (peek-char nil stream)))
+    (if (char= #\( next)
+        ;; Parenthesized form: use standard CL reader
+        (read stream t nil t)
+        ;; Bare symbol: read chars until terminator
+        (let ((sym-str (with-output-to-string (s)
+                         (loop :for c := (peek-char nil stream)
+                               :while (not (symbol-terminator-p c))
+                               :do (write-char (read-char stream) s)))))
+          (read-from-string sym-str)))))
+
 (defun read-doc-here (stream char arg)
   (declare (ignore char arg))
-  (with-output-to-string (str)
-    (loop :for char := (read-char stream) :do
-      (if (and (char= #\/ char)
-               (char= #\# (peek-char nil stream)))
-          (progn
-            (read-char stream)
-            (loop-finish))
-          (write-char char str)))))
+  (let ((parts '())
+        (current (make-string-output-stream)))
+    (loop :for ch := (read-char stream) :do
+      (cond
+        ((and (char= #\/ ch)
+              (char= #\# (peek-char nil stream)))
+         ;; Could be end delimiter /# or start of expansion /#.
+         (read-char stream) ;; consume #
+         (cond
+           ((char= #\. (peek-char nil stream))
+            ;; It's /#. — / is literal, #. is expansion
+            (write-char #\/ current)
+            (read-char stream) ;; consume .
+            (push (get-output-stream-string current) parts)
+            (push (read-heredoc-expr stream) parts)
+            (setf current (make-string-output-stream)))
+           (t
+            ;; End delimiter /#
+            (push (get-output-stream-string current) parts)
+            (loop-finish))))
+        ;; Expansion: #. not preceded by /
+        ((and (char= #\# ch)
+              (char= #\. (peek-char nil stream)))
+         (read-char stream)
+         (push (get-output-stream-string current) parts)
+         (push (read-heredoc-expr stream) parts)
+         (setf current (make-string-output-stream)))
+        ;; Regular character
+        (t (write-char ch current))))
+    (let ((collected (nreverse parts)))
+      (if (every #'stringp collected)
+          ;; No expansion: plain string
+          (apply #'concatenate 'string collected)
+          ;; Has expansion: build concatenate form
+          `(concatenate 'string
+                        ,@(mapcar (lambda (p)
+                                    (if (stringp p)
+                                        p
+                                        `(princ-to-string ,p)))
+                                  collected))))))
 
 (defun quote-non-string (x)
   (if (stringp x)
@@ -96,3 +154,10 @@
                      :defaults pn
                      :name nil
                      :type nil))))
+
+(defun get-hostname ()
+  "Get the machine hostname, equivalent to $(uname -n)."
+  (string-trim '(#\Newline #\Return #\Space)
+               (machine-instance)))
+
+
