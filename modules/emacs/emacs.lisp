@@ -80,6 +80,7 @@
       (iedit )
       (clang-format)
       (unfill)
+      (cjk-edit)
       (beacon)
       (cursory)
 
