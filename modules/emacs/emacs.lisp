@@ -132,4 +132,5 @@
       (gptel)
       ;;(claude-code)
       (ai-code-interface)
+      (agent-shell)
       (sly))
