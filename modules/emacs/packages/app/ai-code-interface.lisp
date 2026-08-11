@@ -8,7 +8,39 @@
                  (setq ai-code-backends-infra-terminal-backend 'ghostel)
                  (with-eval-after-load 'ghostel
                    ;; Force <escape> to send a raw terminal ESC character inside semi-char mode
-                   (define-key ghostel-semi-char-mode-map (kbd "<escape>") #'ghostel-send-escape)))
+                   (define-key ghostel-semi-char-mode-map (kbd "<escape>") #'ghostel-send-escape))
+                 ;; Fix ai-code-backends-infra-ghostel advice for ghostel v0.49+ API
+                 ;; ghostel--schedule-link-detection no longer takes (begin end) args;
+                 ;; it reads ghostel--repainted-region internally.
+                 (with-eval-after-load 'ai-code-backends-infra-ghostel
+                   (defun ai-code-backends-infra-ghostel--around-schedule-link-detection
+                       (orig-fn &rest _args)
+                     "Call ORIG-FN after restoring links before a redraw scan."
+                     (let ((region (and (boundp 'ghostel--repainted-region)
+                                        ghostel--repainted-region)))
+                       (when region
+                         (ai-code-backends-infra-ghostel--restore-preserved-link-spans
+                          (car region) (cdr region))))
+                     (funcall orig-fn))
+                   (defun ai-code-backends-infra-ghostel--around-run-queued-link-detection
+                       (orig-fn buffer)
+                     "Call ORIG-FN for BUFFER and cache Ghostel link spans afterward."
+                     (condition-case nil
+                         (let (begin end)
+                           (when (buffer-live-p buffer)
+                             (with-current-buffer buffer
+                               (when (ai-code-backends-infra-ghostel--ai-session-buffer-p)
+                                 (setq begin ghostel--plain-link-detection-begin
+                                       end ghostel--plain-link-detection-end))))
+                           (prog1 (funcall orig-fn buffer)
+                             (when (and (buffer-live-p buffer)
+                                        (markerp begin) (markerp end)
+                                        (marker-buffer begin) (marker-buffer end)
+                                        (marker-position begin) (marker-position end))
+                               (with-current-buffer buffer
+                                 (ai-code-backends-infra-ghostel--cache-preserved-link-spans
+                                  begin end)))))
+                       (error (funcall orig-fn buffer))))))
      /#
      )
     ((:CALL) #/(progn
@@ -188,7 +220,86 @@ margin and caps at `claude-auto-resume-max-delay'."
                                               (string-prefix-p "ANTHROPIC_" e))
                                             process-environment)))
                            (ai-code-claude-code))
-                       (ai-code-claude-code)))))
+                       (ai-code-claude-code))))
+
+                 ;;; Container support for claude code / kiro-cli
+                 ;; Uses shared devbox-container--* infrastructure from emacs.lisp
+
+                 (defun claude-container ()
+                   "Run claude code inside a Docker container.
+Prompts for container, auth method, working directory, and permissions."
+                   (interactive)
+                   (let* ((container (devbox-container--read-container))
+                          (user devbox-container-user)
+                          (_ensure (devbox-container--ensure-helper container user))
+                          (use-subscription (y-or-n-p "Use Claude subscription? "))
+                          (skip-perms (y-or-n-p "Enable --dangerously-skip-permissions? "))
+                          (workdir (devbox-container--read-workdir container user))
+                          (env-pairs
+                           (if use-subscription
+                               '(("ANTHROPIC_API_KEY" . "")
+                                 ("ANTHROPIC_BASE_URL" . "")
+                                 ("ANTHROPIC_AUTH_TOKEN" . ""))
+                             (let ((pairs nil))
+                               (when (getenv "ANTHROPIC_AUTH_TOKEN")
+                                 (push (cons "ANTHROPIC_AUTH_TOKEN" (getenv "ANTHROPIC_AUTH_TOKEN")) pairs))
+                               (when (getenv "ANTHROPIC_BASE_URL")
+                                 (push (cons "ANTHROPIC_BASE_URL" (getenv "ANTHROPIC_BASE_URL")) pairs))
+                               pairs)))
+                          (args (when skip-perms '("--dangerously-skip-permissions")))
+                          (command
+                           (mapconcat
+                            #'identity
+                            (append
+                             (list "docker" "exec" "-it"
+                                   "--user" user
+                                   "-w" workdir)
+                             (mapcan (lambda (pair)
+                                       (list "-e" (format "%s=%s" (car pair) (cdr pair))))
+                                     env-pairs)
+                             (list container devbox-container-helper-path "run" "claude")
+                             args)
+                            " "))
+                          (ai-code-mcp-agent-enabled-backends nil)
+                          (ai-code-claude-code-program command)
+                          (ai-code-claude-code-program-switches nil))
+                     (ai-code-claude-code)))
+                 (defalias 'devbox/claude #'claude-container)
+
+                 (defun kiro-container ()
+                   "Run kiro-cli inside a Docker container.
+Prompts for container, working directory."
+                   (interactive)
+                   (let* ((container (devbox-container--read-container))
+                          (user devbox-container-user)
+                          (_ensure (devbox-container--ensure-helper container user))
+                          (workdir (devbox-container--read-workdir container user))
+                          (env-pairs
+                           (let ((pairs nil))
+                             (when (getenv "KIRO_API_KEY")
+                               (push (cons "KIRO_API_KEY" (getenv "KIRO_API_KEY")) pairs))
+                             (when (getenv "ANTHROPIC_BASE_URL")
+                               (push (cons "ANTHROPIC_BASE_URL" (getenv "ANTHROPIC_BASE_URL")) pairs))
+                             (when (getenv "ANTHROPIC_AUTH_TOKEN")
+                               (push (cons "ANTHROPIC_AUTH_TOKEN" (getenv "ANTHROPIC_AUTH_TOKEN")) pairs))
+                             pairs))
+                          (command
+                           (mapconcat
+                            #'identity
+                            (append
+                             (list "docker" "exec" "-it"
+                                   "--user" user
+                                   "-w" workdir)
+                             (mapcan (lambda (pair)
+                                       (list "-e" (format "%s=%s" (car pair) (cdr pair))))
+                                     env-pairs)
+                             (list container devbox-container-helper-path "run" "kiro"))
+                            " "))
+                          (ai-code-mcp-agent-enabled-backends nil)
+                          (ai-code-claude-code-program command)
+                          (ai-code-claude-code-program-switches nil))
+                     (ai-code-claude-code)))
+                 (defalias 'devbox/kiro #'kiro-container))
      /#
      )
     (otherwise "")))

@@ -1,0 +1,73 @@
+#!/usr/bin/env bash
+# devbox-agent: Helper for running AI agents and providing completion inside containers.
+# Intended to be available on PATH inside the devbox container.
+#
+# Usage:
+#   devbox-agent run claude [ARGS...]       - Launch claude code
+#   devbox-agent run kiro [ARGS...]         - Launch kiro-cli chat
+#   devbox-agent complete-dirs DIR          - List subdirectories of DIR (one per line)
+#   devbox-agent complete-dirs DIR DEPTH    - List subdirectories up to DEPTH levels
+
+set -euo pipefail
+
+cmd="${1:-help}"
+shift || true
+
+case "$cmd" in
+  run)
+    program="${1:-claude}"
+    shift || true
+    # Ensure nix-profile is on PATH for agent binaries
+    export PATH="$HOME/.nix-profile/bin:$HOME/.local/bin:$HOME/.cargo/bin:$PATH"
+    case "$program" in
+      claude)
+        exec claude "$@"
+        ;;
+      kiro)
+        exec kiro-cli chat "$@"
+        ;;
+      *)
+        echo "Unknown program: $program" >&2
+        echo "Supported: claude, kiro" >&2
+        exit 1
+        ;;
+    esac
+    ;;
+
+  complete-dirs)
+    dir="${1:-/}"
+    depth="${2:-1}"
+    # Output directories one per line, with trailing slash
+    find "$dir" -maxdepth "$depth" -type d 2>/dev/null | while IFS= read -r d; do
+      printf '%s/\n' "${d%/}"
+    done
+    ;;
+
+  info)
+    echo "devbox-agent"
+    echo "user: $(whoami)"
+    echo "home: $HOME"
+    echo "claude: $(which claude 2>/dev/null || echo 'not found')"
+    echo "kiro-cli: $(which kiro-cli 2>/dev/null || echo 'not found')"
+    echo "claude-agent-acp: $(which claude-agent-acp 2>/dev/null || echo 'not found')"
+    ;;
+
+  help|--help|-h)
+    cat <<EOF
+devbox-agent - AI agent helper for devbox containers
+
+Commands:
+  run claude [ARGS...]       Launch Claude Code with optional arguments
+  run kiro [ARGS...]         Launch kiro-cli chat with optional arguments
+  complete-dirs DIR [DEPTH]  List subdirectories (default depth: 1)
+  info                       Show environment info
+  help                       Show this help
+EOF
+    ;;
+
+  *)
+    echo "Unknown command: $cmd" >&2
+    echo "Run 'devbox-agent help' for usage." >&2
+    exit 1
+    ;;
+esac
