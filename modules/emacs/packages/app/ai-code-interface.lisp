@@ -247,22 +247,19 @@ Prompts for container, auth method, working directory, and permissions."
                                  (push (cons "ANTHROPIC_BASE_URL" (getenv "ANTHROPIC_BASE_URL")) pairs))
                                pairs)))
                           (args (when skip-perms '("--dangerously-skip-permissions")))
-                          (command
-                           (mapconcat
-                            #'identity
-                            (append
-                             (list "docker" "exec" "-it"
-                                   "--user" user
-                                   "-w" workdir)
-                             (mapcan (lambda (pair)
-                                       (list "-e" (format "%s=%s" (car pair) (cdr pair))))
-                                     env-pairs)
-                             (list container devbox-container-helper-path "run" "claude")
-                             args)
-                            " "))
+                          (switches
+                           (append
+                            (list "exec" "-it"
+                                  "--user" user
+                                  "-w" workdir)
+                            (mapcan (lambda (pair)
+                                      (list "-e" (format "%s=%s" (car pair) (cdr pair))))
+                                    env-pairs)
+                            (list container devbox-container-helper-path "run" "claude")
+                            args))
                           (ai-code-mcp-agent-enabled-backends nil)
-                          (ai-code-claude-code-program command)
-                          (ai-code-claude-code-program-switches nil))
+                          (ai-code-claude-code-program "docker")
+                          (ai-code-claude-code-program-switches switches))
                      (ai-code-claude-code)))
                  (defalias 'devbox/claude #'claude-container)
 
@@ -283,21 +280,18 @@ Prompts for container, working directory."
                              (when (getenv "ANTHROPIC_AUTH_TOKEN")
                                (push (cons "ANTHROPIC_AUTH_TOKEN" (getenv "ANTHROPIC_AUTH_TOKEN")) pairs))
                              pairs))
-                          (command
-                           (mapconcat
-                            #'identity
-                            (append
-                             (list "docker" "exec" "-it"
-                                   "--user" user
-                                   "-w" workdir)
-                             (mapcan (lambda (pair)
-                                       (list "-e" (format "%s=%s" (car pair) (cdr pair))))
-                                     env-pairs)
-                             (list container devbox-container-helper-path "run" "kiro"))
-                            " "))
+                          (switches
+                           (append
+                            (list "exec" "-it"
+                                  "--user" user
+                                  "-w" workdir)
+                            (mapcan (lambda (pair)
+                                      (list "-e" (format "%s=%s" (car pair) (cdr pair))))
+                                    env-pairs)
+                            (list container devbox-container-helper-path "run" "kiro")))
                           (ai-code-mcp-agent-enabled-backends nil)
-                          (ai-code-claude-code-program command)
-                          (ai-code-claude-code-program-switches nil))
+                          (ai-code-claude-code-program "docker")
+                          (ai-code-claude-code-program-switches switches))
                      (ai-code-claude-code)))
                  (defalias 'devbox/kiro #'kiro-container))
      /#
