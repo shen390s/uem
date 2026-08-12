@@ -193,6 +193,7 @@ Provides Tab-completion via devbox-agent helper with caching."
       :core 
       proxy  ;; put this before core that we can use proxy for straight installation
       straight
+      treesit-auto
       
       :editor 
       (bind-mode ("poly-markdown-mode" ".md" ".markdown" ".mkd" ".mdown" ".mkdn" ".mdwn")
