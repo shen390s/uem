@@ -23,7 +23,7 @@
           
 	      (setq emacs-config-dir "~/.config/emacs/uem")
           (setenv "ANTHROPIC_BASE_URL" "http://omniroute.#.(get-hostname).overlay:20128")
-          (setenv "ANTHROPIC_AUTH_TOKEN" "sk-b068da137c424285-4056f0-962bdecb")
+          (setenv "ANTHROPIC_AUTH_TOKEN" "sk-2be8b344294aab78-629fbd-4958adf3")
           (with-eval-after-load 'treesit
             (add-to-list 'treesit-language-source-alist
                          '(tlaplus "https://github.com/tlaplus-community/tree-sitter-tlaplus"))
@@ -54,6 +54,10 @@
             (set-face-attribute 'ghostel-default nil
                                 :family "Inconsolata"
                                 :height 140) )  ; 
+          (set-face-attribute 'fixed-pitch nil
+                              :family "Inconsolata"
+                              :height 140
+                              :weight 'normal)
           (setq straight-vc-git-default-protocol 'ssh)
 
           ;; Shared devbox container infrastructure for ai-code-interface and agent-shell
