@@ -71,7 +71,7 @@
             (defvar devbox-container-helper-path "/home/claude/.local/bin/devbox-agent"
               "Absolute path to the helper inside the container.")
 
-            (defvar devbox-container-default-workdir "/home/claude/works"
+            (defvar devbox-container-default-workdir "/home/rshen/projects"
               "Default working directory inside the container.")
 
             (defvar devbox-container-history nil
