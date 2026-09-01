@@ -225,8 +225,114 @@ margin and caps at `claude-auto-resume-max-delay'."
                  ;;; Container support for claude code / kiro-cli
                  ;; Uses shared devbox-container--* infrastructure from emacs.lisp
 
+                 (defvar devbox-container-session-name nil
+                   "Buffer-local tmux session name for the current agent session.")
+                 (defvar devbox-container-session-container nil
+                   "Buffer-local container for the current agent session.")
+                 (defvar devbox-container-session-user nil
+                   "Buffer-local container user for the current agent session.")
+                 (make-variable-buffer-local 'devbox-container-session-name)
+                 (make-variable-buffer-local 'devbox-container-session-container)
+                 (make-variable-buffer-local 'devbox-container-session-user)
+
+                 (defun devbox-container--detach-session (container user session)
+                   "Detach tmux SESSION in CONTAINER as USER, leaving it running."
+                   (ignore-errors
+                     (call-process "docker" nil nil nil
+                                   "exec" "--user" user container
+                                   devbox-container-helper-path "detach" session)))
+
+                 (defun devbox-container--detach-current-session ()
+                   "Detach the tmux session recorded on the current buffer."
+                   (when (and devbox-container-session-name
+                              devbox-container-session-container
+                              devbox-container-session-user)
+                     (devbox-container--detach-session
+                      devbox-container-session-container
+                      devbox-container-session-user
+                      devbox-container-session-name)))
+
+                 (defun devbox-container--prepare-session-buffer (container user session)
+                   "Configure the current buffer for a devbox tmux SESSION.
+The session lives in CONTAINER as USER.  Sets buffer-local session metadata
+and installs a kill-buffer-hook that detaches (leaving the session running)
+rather than killing it when the buffer is closed."
+                   (if (eq ai-code-backends-infra-terminal-backend 'vterm)
+                       (setq-local ai-code-backends-infra-strip-alternate-screen t)
+                     (setq-local ai-code-backends-infra-strip-alternate-screen nil))
+                   (when (eq ai-code-backends-infra-terminal-backend 'ghostel)
+                     (setq-local ghostel-full-redraw t))
+                   (setq-local devbox-container-session-name session)
+                   (setq-local devbox-container-session-container container)
+                   (setq-local devbox-container-session-user user)
+                   (add-hook 'kill-buffer-hook
+                             #'devbox-container--detach-current-session nil t))
+
+                 (defun devbox-container--start-terminal (container user argv session label)
+                   "Start a terminal for CONTAINER/USER running ARGV, attaching tmux SESSION.
+LABEL is the user-facing session label."
+                   (let ((post-start-fn
+                          (lambda (buffer _process _instance)
+                            (with-current-buffer buffer
+                              (devbox-container--prepare-session-buffer
+                               container user session)))))
+                     (ai-code-backends-infra--start-cli-session
+                      (list :program "docker"
+                            :switches argv
+                            :label label
+                            :process-table ai-code-claude-code--processes
+                            :session-prefix ai-code-claude-code--session-prefix
+                            :escape-function #'ai-code-claude-code-send-escape
+                            :env-vars (list "TERM_PROGRAM=emacs"
+                                            "FORCE_CODE_TERMINAL=true")
+                            :multiline-input-sequence
+                            ai-code-claude-code-multiline-input-sequence
+                            :prepare-launch
+                            (lambda (_wd _argv)
+                              (list :post-start-fn post-start-fn)))
+                      nil)))
+
+                 (defun devbox/list-sessions ()
+                   "List living agent tmux sessions in a container."
+                   (interactive)
+                   (let* ((container (devbox-container--read-container))
+                          (user devbox-container-user)
+                          (raw (shell-command-to-string
+                                (format "docker exec --user %s %s %s list-session 2>&1"
+                                        (shell-quote-argument user)
+                                        (shell-quote-argument container)
+                                        (shell-quote-argument devbox-container-helper-path)))))
+                     (with-current-buffer (get-buffer-create "*devbox-agent-sessions*")
+                       (let ((inhibit-read-only t))
+                         (erase-buffer)
+                         (insert raw))
+                       (special-mode)
+                       (display-buffer (current-buffer)))))
+
+                 (defun devbox/agent-attach ()
+                   "Attach to a living agent tmux session in a container."
+                   (interactive)
+                   (let* ((container (devbox-container--read-container))
+                          (user devbox-container-user)
+                          (_ensure (devbox-container--ensure-helper container user))
+                          (session (devbox-container--read-session
+                                    container user "Attach session: "))
+                          (argv (list "exec" "-it" "--user" user container
+                                      devbox-container-helper-path "attach" session)))
+                     (devbox-container--start-terminal
+                      container user argv session "Agent")))
+
+                 (defun devbox/agent-detach ()
+                   "Detach an agent tmux session in a container, leaving it running."
+                   (interactive)
+                   (let* ((container (devbox-container--read-container))
+                          (user devbox-container-user)
+                          (session (devbox-container--read-session
+                                    container user "Detach session: ")))
+                     (devbox-container--detach-session container user session)))
+
                  (defun claude-container ()
-                   "Run claude code inside a Docker container.
+                   "Run Claude Code inside a Docker container as a tmux session.
 Prompts for container, auth method, working directory, and permissions."
                    (interactive)
                    (let* ((container (devbox-container--read-container))
@@ -235,6 +341,10 @@ Prompts for container, auth method, working directory, and permissions."
                           (use-subscription (y-or-n-p "Use Claude subscription? "))
                           (skip-perms (y-or-n-p "Enable --dangerously-skip-permissions? "))
                           (workdir (devbox-container--read-workdir container user))
+                          (session (devbox-container--read-session
+                                    container user "Claude session: "
+                                    (format "claude-%s"
+                                            (devbox-container--project-name workdir))))
                           (env-pairs
                            (if use-subscription
                                '(("ANTHROPIC_API_KEY" . "")
@@ -247,7 +357,7 @@ Prompts for container, auth method, working directory, and permissions."
                                  (push (cons "ANTHROPIC_BASE_URL" (getenv "ANTHROPIC_BASE_URL")) pairs))
                                pairs)))
                           (args (when skip-perms '("--dangerously-skip-permissions")))
-                          (switches
+                          (argv
                            (append
                             (list "exec" "-it"
                                   "--user" user
@@ -255,22 +365,25 @@ Prompts for container, auth method, working directory, and permissions."
                             (mapcan (lambda (pair)
                                       (list "-e" (format "%s=%s" (car pair) (cdr pair))))
                                     env-pairs)
-                            (list container devbox-container-helper-path "run" "claude")
-                            args))
-                          (ai-code-mcp-agent-enabled-backends nil)
-                          (ai-code-claude-code-program "docker")
-                          (ai-code-claude-code-program-switches switches))
-                     (ai-code-claude-code)))
+                            (list container devbox-container-helper-path "run"
+                                  "-s" session "-c" "claude" "--")
+                            args)))
+                     (devbox-container--start-terminal
+                      container user argv session "Claude Code")))
                  (defalias 'devbox/claude #'claude-container)
 
                  (defun kiro-container ()
-                   "Run kiro-cli inside a Docker container.
-Prompts for container, working directory."
+                   "Run kiro-cli inside a Docker container as a tmux session.
+Prompts for container and working directory."
                    (interactive)
                    (let* ((container (devbox-container--read-container))
                           (user devbox-container-user)
                           (_ensure (devbox-container--ensure-helper container user))
                           (workdir (devbox-container--read-workdir container user))
+                          (session (devbox-container--read-session
+                                    container user "Kiro session: "
+                                    (format "kiro-%s"
+                                            (devbox-container--project-name workdir))))
                           (env-pairs
                            (let ((pairs nil))
                              (when (getenv "KIRO_API_KEY")
@@ -280,7 +393,7 @@ Prompts for container, working directory."
                              (when (getenv "ANTHROPIC_AUTH_TOKEN")
                                (push (cons "ANTHROPIC_AUTH_TOKEN" (getenv "ANTHROPIC_AUTH_TOKEN")) pairs))
                              pairs))
-                          (switches
+                          (argv
                            (append
                             (list "exec" "-it"
                                   "--user" user
@@ -288,11 +401,10 @@ Prompts for container, working directory."
                             (mapcan (lambda (pair)
                                       (list "-e" (format "%s=%s" (car pair) (cdr pair))))
                                     env-pairs)
-                            (list container devbox-container-helper-path "run" "kiro")))
-                          (ai-code-mcp-agent-enabled-backends nil)
-                          (ai-code-claude-code-program "docker")
-                          (ai-code-claude-code-program-switches switches))
-                     (ai-code-claude-code)))
+                            (list container devbox-container-helper-path "run"
+                                  "-s" session "-c" "kiro-cli" "--" "chat"))))
+                     (devbox-container--start-terminal
+                      container user argv session "Kiro")))
                  (defalias 'devbox/kiro #'kiro-container))
      /#
      )

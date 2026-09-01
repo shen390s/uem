@@ -68,8 +68,8 @@
             (defvar devbox-container-user "claude"
               "User to run as inside the container.")
 
-            (defvar devbox-container-helper-path "/home/claude/.local/bin/devbox-agent"
-              "Absolute path to the helper inside the container.")
+            (defvar devbox-container-helper-path "/usr/local/bin/devbox-agent"
+              "Absolute path to the devbox-agent helper inside the container.")
 
             (defvar devbox-container-default-workdir "/home/rshen/projects"
               "Default working directory inside the container.")
@@ -77,63 +77,13 @@
             (defvar devbox-container-history nil
               "History for container working directory prompts.")
 
-            (defvar devbox-container--helper-script
-              "#!/usr/bin/env bash
-set -euo pipefail
-cmd=\"${1:-help}\"
-shift || true
-case \"$cmd\" in
-  run)
-    program=\"${1:-claude}\"
-    shift || true
-    export PATH=\"$HOME/.nix-profile/bin:$HOME/.local/bin:$HOME/.cargo/bin:$PATH\"
-    case \"$program\" in
-      claude) exec claude \"$@\" ;;
-      kiro) exec kiro-cli chat \"$@\" ;;
-      *) echo \"Unknown: $program\" >&2; exit 1 ;;
-    esac
-    ;;
-  complete-dirs)
-    dir=\"${1:-/}\"
-    depth=\"${2:-1}\"
-    find \"$dir\" -maxdepth \"$depth\" -type d 2>/dev/null | while IFS= read -r d; do
-      printf '%s/\\n' \"${d%/}\"
-    done
-    ;;
-  info)
-    export PATH=\"$HOME/.nix-profile/bin:$HOME/.local/bin:$HOME/.cargo/bin:$PATH\"
-    echo \"devbox-agent\"
-    echo \"user: $(whoami)\"
-    echo \"claude: $(which claude 2>/dev/null || echo 'not found')\"
-    echo \"kiro-cli: $(which kiro-cli 2>/dev/null || echo 'not found')\"
-    ;;
-  *) echo \"Usage: devbox-agent run claude|kiro | complete-dirs DIR [DEPTH] | info\" >&2 ;;
-esac
-"
-              "Content of the devbox-agent helper script.")
-
-            (defvar devbox-container--helper-injected (make-hash-table :test 'equal)
-              "Track which containers already have the helper injected this session.")
-
             (defun devbox-container--ensure-helper (container user)
-              "Ensure devbox-agent helper is installed in CONTAINER for USER."
-              (unless (gethash container devbox-container--helper-injected)
-                (let ((helper-dir (file-name-directory devbox-container-helper-path)))
-                  (call-process "docker" nil nil nil
-                                "exec" "--user" user container
-                                "mkdir" "-p" helper-dir)
-                  (let ((proc (start-process "devbox-agent-inject" nil
-                                             "docker" "exec" "-i"
-                                             "--user" user container
-                                             "tee" devbox-container-helper-path)))
-                    (process-send-string proc devbox-container--helper-script)
-                    (process-send-eof proc)
-                    (while (process-live-p proc)
-                      (sleep-for 0.05)))
-                  (call-process "docker" nil nil nil
-                                "exec" "--user" user container
-                                "chmod" "+x" devbox-container-helper-path)
-                  (puthash container t devbox-container--helper-injected))))
+              "Verify the devbox-agent helper is available in CONTAINER for USER.
+The helper is baked into the container image at build time, so this only
+checks that it is present and executable."
+              (eq 0 (call-process "docker" nil nil nil
+                                  "exec" "--user" user container
+                                  "test" "-x" devbox-container-helper-path)))
 
             (defun devbox-container--read-container ()
               "Prompt for a running Docker container name."
@@ -149,7 +99,9 @@ esac
                  containers nil nil nil nil default)))
 
             (defun devbox-container--list-dirs (container user dir &optional depth)
-              "List directories inside CONTAINER as USER under DIR up to DEPTH."
+              "List directories inside CONTAINER as USER under DIR up to DEPTH.
+The devbox-agent `complete-dirs' command returns paths relative to DIR,
+so each is expanded back into an absolute container path."
               (let* ((depth-str (number-to-string (or depth 1)))
                      (dirs-raw
                       (string-trim
@@ -161,7 +113,9 @@ esac
                                 (shell-quote-argument dir)
                                 depth-str)))))
                 (when (not (string-empty-p dirs-raw))
-                  (split-string dirs-raw "\n" t))))
+                  (mapcar (lambda (rel)
+                            (file-name-as-directory (expand-file-name rel dir)))
+                          (split-string dirs-raw "\n" t)))))
 
             (defun devbox-container--read-workdir (container user)
               "Prompt for working directory inside CONTAINER as USER.
@@ -191,7 +145,62 @@ Provides Tab-completion via devbox-agent helper with caching."
                                          (complete-with-action action dirs input pred)))))
                                    nil nil
                                    devbox-container-default-workdir
-                                   'devbox-container-history))))))
+                                   'devbox-container-history))))
+
+            (defvar devbox-container-session-history nil
+              "History for agent session name prompts.")
+
+            (defun devbox-container--list-sessions (container user)
+              "List living agent tmux sessions inside CONTAINER as USER.
+Returns a list of session names, or nil when there are none."
+              (let* ((raw
+                      (string-trim
+                       (shell-command-to-string
+                        (format "docker exec --user %s %s %s list-session 2>/dev/null"
+                                (shell-quote-argument user)
+                                (shell-quote-argument container)
+                                (shell-quote-argument devbox-container-helper-path))))))
+                (when (and (not (string-empty-p raw))
+                           (not (string-match-p "no agent sessions" raw)))
+                  (mapcar (lambda (line)
+                            (string-trim (car (split-string line ":"))))
+                          (split-string raw "\n" t)))))
+
+            (defun devbox-container--project-name (workdir)
+              "Return a short project name for WORKDIR (its basename)."
+              (file-name-nondirectory (directory-file-name workdir)))
+
+            (defun devbox-container--next-session-name (sessions base)
+              "Return the next unused session name derived from BASE.
+Given living SESSIONS, return BASE when unused, otherwise BASE-N for the
+smallest N >= 2 that is also unused.  Supports multiple sessions per project."
+              (let ((candidate base)
+                    (n 2))
+                (while (member candidate sessions)
+                  (setq candidate (format "%s-%d" base n)
+                        n (1+ n)))
+                candidate))
+
+            (defun devbox-container--read-session (container user &optional prompt default)
+              "Prompt for an agent session name inside CONTAINER as USER.
+PROMPT overrides the default prompt.  DEFAULT, when non-nil, is a base name
+used as the default and, when already taken, a fresh BASE-N name is also
+offered so multiple sessions per project are supported.  When DEFAULT is
+nil, the living sessions are offered and the first is the default."
+              (let* ((sessions (devbox-container--list-sessions container user))
+                     (base (or default (car sessions) "agent"))
+                     (candidates
+                      (if default
+                          (delete-dups
+                           (append (list base
+                                         (devbox-container--next-session-name
+                                          sessions base))
+                                   sessions))
+                        sessions)))
+                (completing-read
+                 (or prompt "Session: ")
+                 candidates nil nil nil 'devbox-container-session-history
+                 base)))))
       /#
       
       :core 

@@ -15,13 +15,69 @@
                        (agent-shell-anthropic-make-authentication :login t))
                  (setq agent-shell-kiro-environment
                        (agent-shell-make-environment-variables :inherit-env t))
+                 (setq agent-shell-show-session-id t)
 
                  ;;; Container support for agent-shell via ACP
                  ;; Uses shared devbox-container--* infrastructure from emacs.lisp
 
+                 (defun devbox-container--acp-prefix (container user workdir env-pairs)
+                   "Return an `agent-shell-command-prefix' to run ACP agents in CONTAINER.
+The agent runs as USER with WORKDIR via `fish -lc'; ENV-PAIRS are passed
+through as `-e KEY=VALUE' options to `docker exec'."
+                   (append
+                    (list "docker" "exec" "-i" "--user" user "-w" workdir)
+                    (mapcan (lambda (pair)
+                              (list "-e" (format "%s=%s" (car pair) (cdr pair))))
+                            env-pairs)
+                    (list container "fish" "-lc")))
+
+                 (defun devbox/list-sessions ()
+                   "List living agent tmux sessions in a container."
+                   (interactive)
+                   (let* ((container (devbox-container--read-container))
+                          (user devbox-container-user)
+                          (raw (shell-command-to-string
+                                (format "docker exec --user %s %s %s list-session 2>&1"
+                                        (shell-quote-argument user)
+                                        (shell-quote-argument container)
+                                        (shell-quote-argument devbox-container-helper-path)))))
+                     (with-current-buffer (get-buffer-create "*devbox-agent-sessions*")
+                       (let ((inhibit-read-only t))
+                         (erase-buffer)
+                         (insert raw))
+                       (special-mode)
+                       (display-buffer (current-buffer)))))
+
+                 (defun devbox/agent-shell-resume ()
+                   "Resume an existing ACP agent session inside a container.
+Prompts for container, working directory, and session ID, then reconnects
+via `agent-shell-resume-session' using the container command prefix."
+                   (interactive)
+                   (let* ((container (devbox-container--read-container))
+                          (user devbox-container-user)
+                          (_ensure (devbox-container--ensure-helper container user))
+                          (workdir (devbox-container--read-workdir container user))
+                          (env-pairs
+                           (let ((pairs nil))
+                             (when (getenv "ANTHROPIC_AUTH_TOKEN")
+                               (push (cons "ANTHROPIC_API_KEY" (getenv "ANTHROPIC_AUTH_TOKEN")) pairs)
+                               (push (cons "ANTHROPIC_AUTH_TOKEN" (getenv "ANTHROPIC_AUTH_TOKEN")) pairs))
+                             (when (getenv "ANTHROPIC_BASE_URL")
+                               (push (cons "ANTHROPIC_BASE_URL" (getenv "ANTHROPIC_BASE_URL")) pairs))
+                             (when (getenv "KIRO_API_KEY")
+                               (push (cons "KIRO_API_KEY" (getenv "KIRO_API_KEY")) pairs))
+                             pairs)))
+                     (let ((agent-shell-command-prefix
+                            (devbox-container--acp-prefix container user workdir env-pairs))
+                           (default-directory workdir)
+                           (agent-shell-cwd-function (lambda () workdir)))
+                       (call-interactively #'agent-shell-resume-session))))
+
                  (defun agent-shell-container-claude ()
                    "Start Claude agent-shell session inside a container.
-Prompts for auth method and working directory."
+Prompts for auth method and working directory.  The ACP session is
+persisted by Claude, so killing the buffer disconnects the client while
+the session stays resumable via `devbox/agent-shell-resume'."
                    (interactive)
                    (require 'agent-shell-anthropic)
                    (let* ((container (devbox-container--read-container))
@@ -44,14 +100,7 @@ Prompts for auth method and working directory."
                                  (push (cons "ANTHROPIC_BASE_URL" (getenv "ANTHROPIC_BASE_URL")) pairs))
                                pairs)))
                           (agent-shell-command-prefix
-                           (append
-                            (list "docker" "exec" "-i"
-                                  "--user" user
-                                  "-w" workdir)
-                            (mapcan (lambda (pair)
-                                      (list "-e" (format "%s=%s" (car pair) (cdr pair))))
-                                    env-pairs)
-                            (list container "fish" "-lc")))
+                           (devbox-container--acp-prefix container user workdir env-pairs))
                           (agent-shell-anthropic-authentication
                            (agent-shell-anthropic-make-authentication :login t))
                           (default-directory workdir)
@@ -61,7 +110,9 @@ Prompts for auth method and working directory."
 
                  (defun agent-shell-container-kiro ()
                    "Start Kiro agent-shell session inside a container.
-Prompts for working directory."
+Prompts for working directory.  The ACP session is persisted by Kiro,
+so killing the buffer disconnects the client while the session stays
+resumable via `devbox/agent-shell-resume'."
                    (interactive)
                    (require 'agent-shell-kiro)
                    (let* ((container (devbox-container--read-container))
@@ -78,14 +129,7 @@ Prompts for working directory."
                                (push (cons "ANTHROPIC_AUTH_TOKEN" (getenv "ANTHROPIC_AUTH_TOKEN")) pairs))
                              pairs))
                           (agent-shell-command-prefix
-                           (append
-                            (list "docker" "exec" "-i"
-                                  "--user" user
-                                  "-w" workdir)
-                            (mapcan (lambda (pair)
-                                      (list "-e" (format "%s=%s" (car pair) (cdr pair))))
-                                    env-pairs)
-                            (list container "fish" "-lc")))
+                           (devbox-container--acp-prefix container user workdir env-pairs))
                           (default-directory workdir)
                           (agent-shell-cwd-function (lambda () workdir)))
                      (agent-shell-kiro-start-agent)))
