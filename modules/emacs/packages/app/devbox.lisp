@@ -25,7 +25,35 @@ Set this to target a remote Docker daemon, for example:
 (setq devbox-container-docker-args '(\"--context\" \"my-remote\"))
 or
 (setq devbox-container-docker-args '(\"-H\" \"ssh://user@host\")).
-These are inserted right after `docker' and before the subcommand.")
+These are inserted right after `docker' and before the subcommand.
+
+`devbox-container--read-host' updates this so a whole command flow -
+including the long-lived terminal it launches - targets the chosen host.")
+
+                 (defvar devbox-container-host-history nil
+                   "History for remote Docker host (user@host) prompts.")
+
+                 (defvar devbox-container-last-host ""
+                   "Last user@host targeted, offered as the default next time.
+Empty string means the local Docker daemon.")
+
+                 (defun devbox-container--read-host ()
+                   "Prompt for a remote Docker host as user@host, or empty for localhost.
+On non-empty input, point the docker CLI at that host over SSH by setting
+`devbox-container-docker-args' to (\"-H\" \"ssh://user@host\").  Empty input
+clears it, targeting the local daemon.  The choice is remembered in
+`devbox-container-last-host' and applied for the rest of the command flow,
+including the terminal session it launches."
+                   (let ((host (string-trim
+                                (read-string
+                                 "Remote host user@host (empty = localhost): "
+                                 devbox-container-last-host
+                                 'devbox-container-host-history))))
+                     (setq devbox-container-last-host host)
+                     (setq devbox-container-docker-args
+                           (unless (string-empty-p host)
+                             (list "-H" (format "ssh://%s" host))))
+                     host))
 
                  (defun devbox-container--docker-argv (&rest args)
                    "Return a docker command ARGV list prefixed with the docker program.
@@ -54,7 +82,10 @@ checks that it is present and executable."
                           "test" "-x" devbox-container-helper-path)))
 
                  (defun devbox-container--read-container ()
-                   "Prompt for a running Docker container name."
+                   "Prompt for a remote host, then a running Docker container name.
+The host prompt (see `devbox-container--read-host') selects the local or a
+remote Docker daemon; the container list is then read from that daemon."
+                   (devbox-container--read-host)
                    (let* ((containers
                            (split-string
                             (string-trim
