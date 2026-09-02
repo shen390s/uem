@@ -168,7 +168,42 @@ nil, the living sessions are offered and the first is the default."
                      (completing-read
                       (or prompt "Session: ")
                       candidates nil nil nil 'devbox-container-session-history
-                      base))))
+                      base)))
+
+                 (defconst devbox-container--new-session-item "+ New session"
+                   "Sentinel completion item that means \"create a new session\".")
+
+                 (defun devbox-container--select-session (container user &optional prompt)
+                   "Select a living agent session in CONTAINER as USER, or choose to create one.
+Living sessions are listed first, followed by a special
+`devbox-container--new-session-item' entry.  Returns the chosen session
+name string, or the symbol `new' when the user picked the new-session
+item (or when there are no living sessions)."
+                   (let ((sessions (devbox-container--list-sessions container user)))
+                     (if (null sessions)
+                         'new
+                       (let* ((candidates
+                               (append sessions
+                                       (list devbox-container--new-session-item)))
+                              (choice (completing-read
+                                       (or prompt "Session: ")
+                                       candidates nil t nil
+                                       'devbox-container-session-history
+                                       (car sessions))))
+                         (if (string-equal choice devbox-container--new-session-item)
+                             'new
+                           choice)))))
+
+                 (defun devbox-container--read-new-session (container user base &optional prompt)
+                   "Read a fresh session name in CONTAINER as USER, defaulting from BASE.
+BASE is a base name (e.g. \"claude-myproject\"); if it is already taken a
+fresh BASE-N name is offered as the default.  PROMPT overrides the prompt."
+                   (let* ((sessions (devbox-container--list-sessions container user))
+                          (default (devbox-container--next-session-name sessions base)))
+                     (completing-read
+                      (or prompt "New session name: ")
+                      nil nil nil nil 'devbox-container-session-history
+                      default))))
          /#)
         (otherwise ""))
       (if (member '+ai-code-interface args)

@@ -47,6 +47,22 @@
                  (require 'ghostel)
                  (require 'ai-code-backends-infra-ghostel)
                  (require 'ai-code-claude-code)
+
+                 ;; Give an ai-code CLI session the whole frame when displayed.
+                 ;; The infra displays via
+                 ;; `ai-code-backends-infra--display-buffer-in-side-window'.  When
+                 ;; `ai-code-backends-infra-use-side-window' is non-nil it builds a
+                 ;; local `display-buffer-alist' pinning the buffer to a fixed-size
+                 ;; side window (with `no-delete-other-windows'), which overrides any
+                 ;; global alist entry.  Turn the side window off so it falls back to
+                 ;; a plain `(display-buffer buffer)' that honours the global alist,
+                 ;; then match the session buffers (named "*claude[project]*") to the
+                 ;; full-frame action.  `focus-on-open' selects the window.
+                 (setq ai-code-backends-infra-use-side-window nil)
+                 (setq ai-code-backends-infra-focus-on-open t)
+                 (add-to-list 'display-buffer-alist
+                              '("\\*claude\\["
+                                (display-buffer-full-frame)))
                  (defvar claude-auto-resume-delay 60
                    "Fallback seconds to wait when reset time cannot be parsed from output.")
 
@@ -333,35 +349,50 @@ LABEL is the user-facing session label."
 
                  (defun claude-container ()
                    "Run Claude Code inside a Docker container as a tmux session.
-Prompts for container, auth method, working directory, and permissions."
+First lists the living sessions and offers a \"new session\" item.  When an
+existing session is chosen, reattach to the already-running CLI directly.
+Only when creating a new session do the working directory, auth method, and
+permission prompts appear."
                    (interactive)
                    (let* ((container (devbox-container--read-container))
                           (user devbox-container-user)
                           (_ensure (devbox-container--ensure-helper container user))
-                          (use-subscription (y-or-n-p "Use Claude subscription? "))
-                          (skip-perms (y-or-n-p "Enable --dangerously-skip-permissions? "))
-                          (workdir (devbox-container--read-workdir container user))
-                          (session (devbox-container--read-session
-                                    container user "Claude session: "
-                                    (format "claude-%s"
-                                            (devbox-container--project-name workdir))))
+                          (selection (devbox-container--select-session
+                                      container user "Claude session: "))
+                          (new-session (eq selection 'new))
+                          (workdir (when new-session
+                                     (devbox-container--read-workdir container user)))
+                          (session (if new-session
+                                       (devbox-container--read-new-session
+                                        container user
+                                        (format "claude-%s"
+                                                (devbox-container--project-name workdir))
+                                        "New Claude session name: ")
+                                     selection))
+                          ;; Only a brand-new session launches the CLI, so only
+                          ;; then do the auth method and permission flags matter.
+                          (use-subscription
+                           (and new-session (y-or-n-p "Use Claude subscription? ")))
+                          (skip-perms
+                           (and new-session
+                                (y-or-n-p "Enable --dangerously-skip-permissions? ")))
                           (env-pairs
-                           (if use-subscription
-                               '(("ANTHROPIC_API_KEY" . "")
-                                 ("ANTHROPIC_BASE_URL" . "")
-                                 ("ANTHROPIC_AUTH_TOKEN" . ""))
-                             (let ((pairs nil))
-                               (when (getenv "ANTHROPIC_AUTH_TOKEN")
-                                 (push (cons "ANTHROPIC_AUTH_TOKEN" (getenv "ANTHROPIC_AUTH_TOKEN")) pairs))
-                               (when (getenv "ANTHROPIC_BASE_URL")
-                                 (push (cons "ANTHROPIC_BASE_URL" (getenv "ANTHROPIC_BASE_URL")) pairs))
-                               pairs)))
+                           (when new-session
+                             (if use-subscription
+                                 '(("ANTHROPIC_API_KEY" . "")
+                                   ("ANTHROPIC_BASE_URL" . "")
+                                   ("ANTHROPIC_AUTH_TOKEN" . ""))
+                               (let ((pairs nil))
+                                 (when (getenv "ANTHROPIC_AUTH_TOKEN")
+                                   (push (cons "ANTHROPIC_AUTH_TOKEN" (getenv "ANTHROPIC_AUTH_TOKEN")) pairs))
+                                 (when (getenv "ANTHROPIC_BASE_URL")
+                                   (push (cons "ANTHROPIC_BASE_URL" (getenv "ANTHROPIC_BASE_URL")) pairs))
+                                 pairs))))
                           (args (when skip-perms '("--dangerously-skip-permissions")))
                           (argv
                            (append
-                            (list "exec" "-it"
-                                  "--user" user
-                                  "-w" workdir)
+                            (list "exec" "-it" "--user" user)
+                            (when new-session (list "-w" workdir))
                             (mapcan (lambda (pair)
                                       (list "-e" (format "%s=%s" (car pair) (cdr pair))))
                                     env-pairs)
@@ -374,30 +405,40 @@ Prompts for container, auth method, working directory, and permissions."
 
                  (defun kiro-container ()
                    "Run kiro-cli inside a Docker container as a tmux session.
-Prompts for container and working directory."
+First lists the living sessions and offers a \"new session\" item.  When an
+existing session is chosen, reattach to the already-running CLI directly.
+Only when creating a new session do the working directory prompt and env
+setup apply."
                    (interactive)
                    (let* ((container (devbox-container--read-container))
                           (user devbox-container-user)
                           (_ensure (devbox-container--ensure-helper container user))
-                          (workdir (devbox-container--read-workdir container user))
-                          (session (devbox-container--read-session
-                                    container user "Kiro session: "
-                                    (format "kiro-%s"
-                                            (devbox-container--project-name workdir))))
+                          (selection (devbox-container--select-session
+                                      container user "Kiro session: "))
+                          (new-session (eq selection 'new))
+                          (workdir (when new-session
+                                     (devbox-container--read-workdir container user)))
+                          (session (if new-session
+                                       (devbox-container--read-new-session
+                                        container user
+                                        (format "kiro-%s"
+                                                (devbox-container--project-name workdir))
+                                        "New Kiro session name: ")
+                                     selection))
                           (env-pairs
-                           (let ((pairs nil))
-                             (when (getenv "KIRO_API_KEY")
-                               (push (cons "KIRO_API_KEY" (getenv "KIRO_API_KEY")) pairs))
-                             (when (getenv "ANTHROPIC_BASE_URL")
-                               (push (cons "ANTHROPIC_BASE_URL" (getenv "ANTHROPIC_BASE_URL")) pairs))
-                             (when (getenv "ANTHROPIC_AUTH_TOKEN")
-                               (push (cons "ANTHROPIC_AUTH_TOKEN" (getenv "ANTHROPIC_AUTH_TOKEN")) pairs))
-                             pairs))
+                           (when new-session
+                             (let ((pairs nil))
+                               (when (getenv "KIRO_API_KEY")
+                                 (push (cons "KIRO_API_KEY" (getenv "KIRO_API_KEY")) pairs))
+                               (when (getenv "ANTHROPIC_BASE_URL")
+                                 (push (cons "ANTHROPIC_BASE_URL" (getenv "ANTHROPIC_BASE_URL")) pairs))
+                               (when (getenv "ANTHROPIC_AUTH_TOKEN")
+                                 (push (cons "ANTHROPIC_AUTH_TOKEN" (getenv "ANTHROPIC_AUTH_TOKEN")) pairs))
+                               pairs)))
                           (argv
                            (append
-                            (list "exec" "-it"
-                                  "--user" user
-                                  "-w" workdir)
+                            (list "exec" "-it" "--user" user)
+                            (when new-session (list "-w" workdir))
                             (mapcan (lambda (pair)
                                       (list "-e" (format "%s=%s" (car pair) (cdr pair))))
                                     env-pairs)

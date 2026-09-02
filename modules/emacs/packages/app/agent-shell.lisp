@@ -17,6 +17,16 @@
                        (agent-shell-make-environment-variables :inherit-env t))
                  (setq agent-shell-show-session-id t)
 
+                 ;; Give an agent-shell session the whole frame when displayed.
+                 ;; agent-shell displays via `agent-shell--display-buffer', which
+                 ;; passes `agent-shell-display-action' as the explicit ACTION to
+                 ;; `display-buffer'.  The default is `display-buffer-same-window'
+                 ;; (leaves other windows split), so set the action itself to a
+                 ;; full-frame action rather than relying on `display-buffer-alist'
+                 ;; (which an explicit ACTION overrides).
+                 (setq agent-shell-display-action
+                       '((display-buffer-full-frame)))
+
                  ;;; Container support for agent-shell via ACP
                  ;; Uses shared devbox-container--* infrastructure from the devbox feature
 
