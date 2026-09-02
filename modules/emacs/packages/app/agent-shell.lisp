@@ -18,18 +18,22 @@
                  (setq agent-shell-show-session-id t)
 
                  ;;; Container support for agent-shell via ACP
-                 ;; Uses shared devbox-container--* infrastructure from emacs.lisp
+                 ;; Uses shared devbox-container--* infrastructure from the devbox feature
 
                  (defun devbox-container--acp-prefix (container user workdir env-pairs)
                    "Return an `agent-shell-command-prefix' to run ACP agents in CONTAINER.
-The agent runs as USER with WORKDIR via `fish -lc'; ENV-PAIRS are passed
-through as `-e KEY=VALUE' options to `docker exec'."
+The agent runs as USER with WORKDIR; ENV-PAIRS are passed through as
+`-e KEY=VALUE' options to `docker exec'.  The login fish config is sourced
+to set up the full environment (PATH, GOPROXY, CARGO_ROOT, ...), but its
+stdout/stderr is discarded so the ACP stdio stream stays clean."
                    (append
-                    (list "docker" "exec" "-i" "--user" user "-w" workdir)
+                    (devbox-container--docker-argv
+                     "exec" "-i" "--user" user "-w" workdir)
                     (mapcan (lambda (pair)
                               (list "-e" (format "%s=%s" (car pair) (cdr pair))))
                             env-pairs)
-                    (list container "fish" "-lc")))
+                    (list container "fish" "--no-config" "-c"
+                          "source ~/.config/fish/config.fish >/dev/null 2>&1; exec $argv")))
 
                  (defun devbox/list-sessions ()
                    "List living agent tmux sessions in a container."
@@ -37,10 +41,10 @@ through as `-e KEY=VALUE' options to `docker exec'."
                    (let* ((container (devbox-container--read-container))
                           (user devbox-container-user)
                           (raw (shell-command-to-string
-                                (format "docker exec --user %s %s %s list-session 2>&1"
-                                        (shell-quote-argument user)
-                                        (shell-quote-argument container)
-                                        (shell-quote-argument devbox-container-helper-path)))))
+                                (format "%s 2>&1"
+                                        (devbox-container--docker-string
+                                         "exec" "--user" user container
+                                         devbox-container-helper-path "list-session")))))
                      (with-current-buffer (get-buffer-create "*devbox-agent-sessions*")
                        (let ((inhibit-read-only t))
                          (erase-buffer)

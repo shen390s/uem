@@ -223,7 +223,7 @@ margin and caps at `claude-auto-resume-max-delay'."
                        (ai-code-claude-code))))
 
                  ;;; Container support for claude code / kiro-cli
-                 ;; Uses shared devbox-container--* infrastructure from emacs.lisp
+                 ;; Uses shared devbox-container--* infrastructure from the devbox feature
 
                  (defvar devbox-container-session-name nil
                    "Buffer-local tmux session name for the current agent session.")
@@ -238,9 +238,9 @@ margin and caps at `claude-auto-resume-max-delay'."
                  (defun devbox-container--detach-session (container user session)
                    "Detach tmux SESSION in CONTAINER as USER, leaving it running."
                    (ignore-errors
-                     (call-process "docker" nil nil nil
-                                   "exec" "--user" user container
-                                   devbox-container-helper-path "detach" session)))
+                     (devbox-container--docker-call
+                      "exec" "--user" user container
+                      devbox-container-helper-path "detach" session)))
 
                  (defun devbox-container--detach-current-session ()
                    "Detach the tmux session recorded on the current buffer."
@@ -278,7 +278,7 @@ LABEL is the user-facing session label."
                                container user session)))))
                      (ai-code-backends-infra--start-cli-session
                       (list :program "docker"
-                            :switches argv
+                            :switches (append devbox-container-docker-args argv)
                             :label label
                             :process-table ai-code-claude-code--processes
                             :session-prefix ai-code-claude-code--session-prefix
@@ -298,10 +298,10 @@ LABEL is the user-facing session label."
                    (let* ((container (devbox-container--read-container))
                           (user devbox-container-user)
                           (raw (shell-command-to-string
-                                (format "docker exec --user %s %s %s list-session 2>&1"
-                                        (shell-quote-argument user)
-                                        (shell-quote-argument container)
-                                        (shell-quote-argument devbox-container-helper-path)))))
+                                (format "%s 2>&1"
+                                        (devbox-container--docker-string
+                                         "exec" "--user" user container
+                                         devbox-container-helper-path "list-session")))))
                      (with-current-buffer (get-buffer-create "*devbox-agent-sessions*")
                        (let ((inhibit-read-only t))
                          (erase-buffer)
