@@ -1,5 +1,7 @@
 = UEM -- Universal Environment Management
 
+_Version 0.2.0_
+
 A Common Lisp tool that generates Emacs configuration from a declarative specification.
 Instead of maintaining a large init.el by hand, you describe your setup using a DSL
 and UEM generates the corresponding Emacs Lisp code through a multi-phase pipeline.
@@ -352,6 +354,71 @@ in `modules/emacs/emacs.lisp`.
 - **SBCL-specific** -- The package uses `sb-ext` and catches
   `SB-PCL:CLASS-NOT-FOUND-ERROR`, limiting portability.
 - **No tests** -- The test system (`uem-test.asd`) has no test files.
+
+== Version History
+
+=== 0.2.0
+
+This release consolidates a large body of work developed on the `develop`
+branch into a single, coherent release. It represents a substantial evolution
+over the previous `master` line, touching the core engine, the module library,
+and the runtime.
+
+==== Core engine
+
+- Reshaped the core class hierarchy into dedicated units: `core-sys.lisp`
+  (base objects and `UEMSystem`), `core-feat.lisp` (features), `core-scope.lisp`
+  (scopes), `core-emacs.lisp` (Emacs-specific scopes and `UEMEmacs`), and
+  `core-shell.lisp` (shell stubs).
+- Added the `#/.../#` embedded-code reader macro with `#.` read-time expansion
+  for variables and expressions, removing the need to escape quotes and
+  parentheses in embedded Emacs Lisp.
+- Added the `mode!` macro and the `EmacsMode` / `EmacsExtMode` classes
+  (`emacs-modes.lisp`) for concise major-mode definitions.
+- Extended `gen.lisp` to recursively load module packages from the module tree
+  and added `initconf.lisp` for configuration initialization.
+
+==== Packaging and tooling
+
+- Added Roswell support via `roswell/uem.ros`.
+- Bumped the ASDF system version and aligned `uem-version` at `0.2.0`.
+
+==== AI and agent integration (`packages/app/`)
+
+- `agent-shell` -- ACP agent sessions, including running Claude and Kiro inside
+  a devbox container with resumable sessions.
+- `ai-code-interface` -- interface layer for AI coding assistants.
+- `devbox` -- container-based development sessions, backed by the
+  `bin/devbox-agent` tmux helper, with remote-container connection support.
+- `claude-code`, `gptel`, `treemacs`.
+
+==== Tree-sitter
+
+- `treesit-auto` for automatic tree-sitter grammar installation.
+- A `tree-sitter` system feature and tree-sitter major modes
+  (`c-ts`, `tlaplus-ts`, `peg-ts`, `typst-ts`, `yaml-ts`).
+
+==== New major modes (`packages/modes/`)
+
+- nix, zig, lua, meson, quarto, typst, capnp, tlaplus / tlaplus-ts,
+  peg-ts, yaml-pro, poly, and simplex (tree-sitter `.simplex` mode).
+
+==== New UI, editor, and misc features
+
+- UI: custom themes (`rshen`, `rshen-x3008`, `rshen-x3840`), cursory, beacon,
+  telephone-line, smart-mode-line, rainbow-delimiters, rainbow-identifiers,
+  hlinum, ruler, smartparens, visual-line.
+- Editor: cjk-edit, iedit, origami, undo-tree, unfill, virtual-auto-fill,
+  autofill, call-graph, which-func.
+- Misc: eldoc, auctex, clang-format, c-guess, live-markup, xce-style.
+- System: proxy support and an improved `straight` bootstrap that falls back to
+  a direct MELPA clone when `straight-pull-package` fails.
+
+==== Documentation
+
+- Rewrote and greatly expanded `README.adoc`: DSL reference (`sys!`, `feat!`,
+  `mode!`, the reader macro), the code-generation pipeline, the profile system,
+  project structure, and guides for adding features and modes.
 
 == License
 

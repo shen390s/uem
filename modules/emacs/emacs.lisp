@@ -31,6 +31,8 @@
                          '(peg "https://github.com/shen390s/tree-sitter-peg"))
             (add-to-list 'treesit-extra-load-path
                          (expand-file-name "straight/build/tree-sitter-langs/bin" user-emacs-directory))
+	    (add-to-list 'treesit-language-source-alist
+            	         '(simplex "https://github.com/shen390s/simplex" "develop" "tree-sitter-simplex/src"))
             (setq treesit-load-name-override-list
                   '((cpp "cpp.so" "tree_sitter_cpp")
                     (c "c.so" "tree_sitter_c")
@@ -71,7 +73,7 @@
       (bind-mode ("poly-markdown-mode" ".md" ".markdown" ".mkd" ".mdown" ".mkdn" ".mdwn")
                  ("c-ts-mode" ".c" ".cpp" ".cc" ".h" ".hpp" ".cxx")
 		         ("poly-ascii-mode" ".adoc")
-		         ("simplex-mode" ".sex" ".simplex" ".sx")
+		         ("simplex-ts-mode" ".sex" ".simplex" ".sx")
 		         ("capnp-mode" ".capnp")
 		         ("emacs-lisp-mode" ".el" "Cask")
 		         ("zig-mode" ".zig" ".zon")
@@ -113,7 +115,7 @@
       (poly-asciidoc +livemarkup +virtual-auto-fill +hlinum)
       (tex +eldoc +auctex +magic-latex +virtual-auto-fill +hlinum)
       (fundamental +hlinum +ruler +smartparens) 
-      (simplex +hlinum)
+      (simplex-ts +hlinum)
       (capnp)
       (prog  +hlinum +ruler +smartparens +rainbow-delimiters +rainbow-identifiers -flymake)
       (nix)

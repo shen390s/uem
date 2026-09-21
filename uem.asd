@@ -2,7 +2,7 @@
   :author "Rongsong Shen <rshen@shenrs.eu>"
   :maintainer "Rongsong Shen <rshen@shenrs.eu>"
   :license "BSD"
-  :version "0.1"
+  :version "0.2.0"
   :homepage "https://github.com/shen390s/uem"
   :bug-tracker "https://github.com/shen390s/uem/issues"
   :source-control (:git "git@github.com:shen390s/uem.git")
