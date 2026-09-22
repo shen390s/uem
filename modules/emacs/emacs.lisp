@@ -33,6 +33,7 @@
                          (expand-file-name "straight/build/tree-sitter-langs/bin" user-emacs-directory))
 	    (add-to-list 'treesit-language-source-alist
             	         '(simplex "https://github.com/shen390s/simplex" "develop" "tree-sitter-simplex/src"))
+	    (treesit-install-language-grammar 'simplex)
             (setq treesit-load-name-override-list
                   '((cpp "cpp.so" "tree_sitter_cpp")
                     (c "c.so" "tree_sitter_c")
