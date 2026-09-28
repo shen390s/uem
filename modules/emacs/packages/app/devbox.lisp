@@ -242,10 +242,13 @@ fresh BASE-N name is offered as the default.  PROMPT overrides the prompt."
         "")
       (if (member '+agent-shell args)
           (agent-shell-entry self action)
+        "")
+      (if (member '+claudemacs args)
+          (claudemacs-entry self action)
         ""))))
 
 (feat! devbox
-       "Devbox container agent sessions; enable integrations via +ai-code-interface and +agent-shell"
+       "Devbox container agent sessions; enable integrations via +ai-code-interface, +agent-shell and +claudemacs"
        (:app)
        devbox-entry)
 

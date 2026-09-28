@@ -31,9 +31,18 @@
                          '(peg "https://github.com/shen390s/tree-sitter-peg"))
             (add-to-list 'treesit-extra-load-path
                          (expand-file-name "straight/build/tree-sitter-langs/bin" user-emacs-directory))
+	    ;; Build and install the peg grammar automatically when missing.
+	    ;; The repo ships the generated parser.c/headers, so a fresh clone
+	    ;; compiles without the tree-sitter CLI.
+	    (unless (treesit-language-available-p 'peg)
+	      (treesit-install-language-grammar 'peg))
 	    (add-to-list 'treesit-language-source-alist
             	         '(simplex "https://github.com/shen390s/simplex" "develop" "tree-sitter-simplex/src"))
-	    (treesit-install-language-grammar 'simplex)
+	    ;; Build and install the grammar automatically when it is missing.
+	    ;; The repo now ships the generated parser.c/headers, so a fresh
+	    ;; clone can be compiled without the tree-sitter CLI.
+	    (unless (treesit-language-available-p 'simplex)
+	      (treesit-install-language-grammar 'simplex))
             (setq treesit-load-name-override-list
                   '((cpp "cpp.so" "tree_sitter_cpp")
                     (c "c.so" "tree_sitter_c")
@@ -144,5 +153,5 @@
       (magit )
       (gptel)
       ;;(claude-code)
-      (devbox +ai-code-interface +agent-shell)
+      (devbox +ai-code-interface +agent-shell +claudemacs)
       (sly))
