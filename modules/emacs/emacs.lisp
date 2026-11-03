@@ -1,6 +1,20 @@
 (sys! emacs
       :init 
       #/(progn
+          (defun uem/read-secret-file (path)
+            "Return the trimmed contents of PATH, or nil if unreadable."
+            (when (and path (file-readable-p path))
+              (with-temp-buffer
+                (insert-file-contents path)
+                (string-trim (buffer-string)))))
+
+          (let ((base-url (uem/read-secret-file "/run/secrets/secrets/claude/base_url"))
+                (auth-token (uem/read-secret-file "/run/secrets/secrets/claude/token")))
+            (when base-url
+              (setenv "ANTHROPIC_BASE_URL" base-url))
+            (when auth-token
+              (setenv "ANTHROPIC_AUTH_TOKEN" auth-token)))
+
           (defun get-chinese-font-size ()
             (let ((width (display-pixel-width)))
               (if (>= width 3840)
@@ -22,8 +36,6 @@
                         (my/set-fonts))))
           
 	      (setq emacs-config-dir "~/.config/emacs/uem")
-          (setenv "ANTHROPIC_BASE_URL" "http://omniroute.#.(get-hostname).overlay:20128")
-          (setenv "ANTHROPIC_AUTH_TOKEN" "sk-2be8b344294aab78-629fbd-4958adf3")
           (with-eval-after-load 'treesit
             (add-to-list 'treesit-language-source-alist
                          '(tlaplus "https://github.com/tlaplus-community/tree-sitter-tlaplus"))

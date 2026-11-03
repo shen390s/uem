@@ -377,17 +377,17 @@ permission prompts appear."
                            (and new-session
                                 (y-or-n-p "Enable --dangerously-skip-permissions? ")))
                           (env-pairs
-                           (when new-session
-                             (if use-subscription
-                                 '(("ANTHROPIC_API_KEY" . "")
-                                   ("ANTHROPIC_BASE_URL" . "")
-                                   ("ANTHROPIC_AUTH_TOKEN" . ""))
-                               (let ((pairs nil))
-                                 (when (getenv "ANTHROPIC_AUTH_TOKEN")
-                                   (push (cons "ANTHROPIC_AUTH_TOKEN" (getenv "ANTHROPIC_AUTH_TOKEN")) pairs))
-                                 (when (getenv "ANTHROPIC_BASE_URL")
-                                   (push (cons "ANTHROPIC_BASE_URL" (getenv "ANTHROPIC_BASE_URL")) pairs))
-                                 pairs))))
+                           (when (and new-session (not use-subscription))
+                             ;; Non-subscription: forward the gateway config from
+                             ;; Emacs' environment.  Subscription deliberately
+                             ;; passes nothing so Claude uses its own login and the
+                             ;; container's defaults (never empty ANTHROPIC_* vars).
+                             (let ((pairs nil))
+                               (when (getenv "ANTHROPIC_AUTH_TOKEN")
+                                 (push (cons "ANTHROPIC_AUTH_TOKEN" (getenv "ANTHROPIC_AUTH_TOKEN")) pairs))
+                               (when (getenv "ANTHROPIC_BASE_URL")
+                                 (push (cons "ANTHROPIC_BASE_URL" (getenv "ANTHROPIC_BASE_URL")) pairs))
+                               pairs)))
                           (args (when skip-perms '("--dangerously-skip-permissions")))
                           (argv
                            (append

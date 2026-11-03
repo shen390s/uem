@@ -101,10 +101,10 @@ the session stays resumable via `devbox/agent-shell-resume'."
                           (workdir (devbox-container--read-workdir container user))
                           (env-pairs
                            (if use-subscription
-                               '(("ANTHROPIC_API_KEY" . "")
-                                 ("ANTHROPIC_BASE_URL" . "")
-                                 ("ANTHROPIC_AUTH_TOKEN" . "")
-                                 ("CLAUDE_CODE_EXECUTABLE" . "/home/claude/.nix-profile/bin/claude"))
+                               ;; Subscription: don't set any ANTHROPIC_* vars so
+                               ;; Claude uses its own login; only point at the
+                               ;; container's claude binary.
+                               '(("CLAUDE_CODE_EXECUTABLE" . "/home/claude/.nix-profile/bin/claude"))
                              (let ((pairs (list (cons "CLAUDE_CODE_EXECUTABLE"
                                                      "/home/claude/.nix-profile/bin/claude"))))
                                (when (getenv "ANTHROPIC_AUTH_TOKEN")
