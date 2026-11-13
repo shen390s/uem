@@ -398,7 +398,8 @@ permission prompts appear."
                                     env-pairs)
                             (list container devbox-container-helper-path "run"
                                   "-s" session "-c" "claude" "--")
-                            args)))
+                            args
+			    (list "-c"))))
                      (devbox-container--start-terminal
                       container user argv session "Claude Code")))
                  (defalias 'devbox/claude #'claude-container)

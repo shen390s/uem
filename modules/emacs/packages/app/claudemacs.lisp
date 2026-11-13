@@ -146,7 +146,8 @@ action commands work against it."
                             (claudemacs-container--env-argv env-pairs)
                             (list container devbox-container-helper-path "run"
                                   "-s" session "-c" "claude" "--")
-                            args)))
+                            args
+			    (list "-c"))))
                      (claudemacs-container--start container user argv "Claude Code")))
                  (defalias 'devbox/claudemacs #'claudemacs-container)
 
